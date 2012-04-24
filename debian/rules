@@ -35,7 +35,13 @@ install: build
 
 	# ... DEB_PACKAGE
 	mkdir -p debian/$(DEB_PACKAGE)/usr/bin
-	cp -r gcfg* debian/$(DEB_PACKAGE)/usr/bin/.
+	cp gcfg debian/$(DEB_PACKAGE)/usr/bin/.
+	mkdir -p debian/$(DEB_PACKAGE)/usr/share/$(DEB_PACKAGE)
+	cp gcfg.functions gcfg.config debian/$(DEB_PACKAGE)/usr/share/$(DEB_PACKAGE)/.
+	ln -s /usr/share/$(DEB_PACKAGE)/gcfg.functions debian/$(DEB_PACKAGE)/usr/bin/gcfg.functions
+	ln -s /usr/share/$(DEB_PACKAGE)/gcfg.config debian/$(DEB_PACKAGE)/usr/bin/gcfg.config
+	mkdir -p debian/$(DEB_PACKAGE)/etc/bash_completion.d
+	cp gcfg.bash_completion debian/$(DEB_PACKAGE)/etc/bash_completion.d/gcfg
 	mkdir -p debian/$(DEB_PACKAGE)/usr/share/doc/$(DEB_PACKAGE)
 	cp *.TXT debian/$(DEB_PACKAGE)/usr/share/doc/$(DEB_PACKAGE)/.
 	sed -i "s/@version@/$(DEB_UPSTREAM_VERSION)/g" debian/$(DEB_PACKAGE)/usr/share/doc/$(DEB_PACKAGE)/*.TXT

@@ -1,0 +1,31 @@
+# gcfg completion
+
+#[ -z "$(type gcfg 2>/dev/null)" ] && return
+_gcfg()
+{
+  local cur
+
+  COMPREPLY=()
+  cur=`_get_cword`
+
+  _expand || return 0
+
+  if [ $COMP_CWORD -eq 1 ]; then
+    COMPREPLY=( $( compgen -W 'list a2ps \
+                               new edit perm rm \
+                               status add log diff commit push \
+                               orig delta \
+                               flag flagged unflag \
+                               verify' -- "$cur" ) )
+  elif [ $COMP_CWORD -eq 2 ]; then
+    local prev=${COMP_WORDS[COMP_CWORD-1]}
+    case "$prev" in
+      @(a2ps|new|edit|perm|rm|add|log|diff|orig|delta|flag|flagged|unflag))
+        _filedir
+      ;;
+    esac
+  fi
+  return 0
+} &&
+complete -F _gcfg $filenames gcfg
+

@@ -1,0 +1,11 @@
+Source: gcfg
+Section: admin
+Priority: optional
+Maintainer: Cedric Dufour <cedric.dufour@ced-network.net>
+Build-Depends: debhelper (>= 5) 
+
+Package: gcfg
+Architecture: all
+Depends: bash, lsb-release, git-core
+Recommends: diffutils, a2ps
+Description: GIT-based Configuration Tracking Utility (GCFG)

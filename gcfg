@@ -1,0 +1,443 @@
+#!/bin/bash
+# INDENTING (emacs/vi): -*- mode:bash; tab-width:2; c-basic-offset:2; intent-tabs-mode:nil; -*- ex: set tabstop=2 expandtab smartindent shiftwidth=2:
+
+
+## Usage
+[ $# -lt 1 -o "${1##*-}" == 'help' ] && cat << EOF && exit 1
+USAGE: ${0##*/} <action> [<parameter> ...]
+
+SYNOPSIS:
+  Perform the requested action in the configuration repository.
+
+ACTIONS:
+  list
+    List the content of the configuration repository
+
+  a2ps <output-file>
+    Create a Postscript document with all files in the configuration repository
+
+  edit <file>
+    Edit the given file (after adding it to the configuration repository)
+
+  new [--batch] <file> [<original-file>]
+    Add the given file to the configuration repository
+
+  perm <file> [<mode> [<ownership>]]
+    Show/change the permissions of the given file
+
+  rm [--batch] <file>
+    Remove the given file from the configuration repository
+
+  add|log|diff <file> [<options> ...]
+    Perform the corresponding GIT action on the given file 
+    (see 'git help ...' for available options)
+
+  status|commit|push [<options> ...]
+    Perform the corresponding GIT action
+    (see 'git help ...' for available options)
+
+  orig <file>
+    Show the original version of the given file
+
+  delta <file> [<comment-prefix>='#']
+    Show the differences between the given file and its original version,
+    with all comments stripped out
+
+  flag|flagged|unflag <file> [<flag>]
+    Set|show/check|remove the specified flag for the given file
+
+  verify
+    Verify the consistency between the configuration repository and the actual
+    files
+EOF
+
+
+## Arguments
+GCFG_ACTION="${1}" && shift
+
+
+## Functions
+source gcfg.functions
+_gcfg_check || exit $?
+
+
+## Action
+case "${GCFG_ACTION}" in
+
+  'list')
+    # ... list content of GIT repository
+    _gcfg_pushd || exit $?
+    find . -not -path './.git/*' -type f | sed 's/^\.*//'
+    _gcfg_popd || exit $?
+    ;;
+
+  'a2ps')
+    # ... check
+    [ -z "$(which a2ps)" ] && _gcfg_error "${GCFG_ACTION}" 'Missing required utility (a2ps)' && exit 1
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <output-file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_DIR="$(dirname "${GCFG_FILE}")"
+    [ ! -w "${GCFG_FILE_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unwritable directory' "${GCFG_FILE_DIR}" && exit 1
+    if [ -e "${GCFG_FILE}" ]; then
+      _gcfg_confirm "${GCFG_ACTION}" 'Configuration document already exists; overwrite ?'
+      [ "$(_gcfg_answer 'y/n')" == 'n' ] && exit 0
+      [ ! -w "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Unwritable file' "${GCFG_FILE}" && exit 1
+    fi
+    # ... compile postcript document
+    _gcfg_pushd || exit $?
+    a2ps --medium=A4 --portrait --columns=1 --borders=on --no-header --toc --left-title='$f' --right-title='$p./$p#' --left-footer='%m - %D{%d.%m.%Y}' --right-footer='%p./%p#' --chars-per-line=100 --file-align=sheet --encoding=ISO-8859-1 --output="${GCFG_FILE}" $(find . -not -path './.git/*' -type f | sed 's/^\.*//')
+    chmod 600 "${GCFG_FILE}"
+    [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file access mode' "${GCFG_FILE}"
+    _gcfg_popd || exit $?
+    ;;
+
+  'edit')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    # ... check repository
+    if [ ! -e "${GCFG_FILE_GIT}" ]; then
+      _gcfg_confirm "${GCFG_ACTION}" 'File does not exist in the configuration repository; add ?'
+      if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+        ${0} new "${GCFG_FILE}" || exit $?
+      fi
+    fi
+    # ... edit
+    GCFG_CKSUM="$(cksum "${GCFG_FILE}" 2>/dev/null)"
+    [ -z "${EDITOR}" ] && EDITOR=vim
+    "${EDITOR}" "${GCFG_FILE}"
+    # ... flag
+    if [ -e "${GCFG_FILE_GIT}" -a "$(cksum "${GCFG_FILE}" 2>/dev/null)" != "${GCFG_CKSUM}" ]; then
+      ${0} flag "${GCFG_FILE}" edit || exit $?
+    fi
+    ;;
+
+  'new')
+    # ... arguments
+    GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    GCFG_FILE_ORIG_SRC=; [ $# -ge 1 ] && GCFG_FILE_ORIG_SRC="${1}" && shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    if [ -n "${GCFG_FILE_ORIG_SRC}" ]; then
+      [ ! -r "${GCFG_FILE_ORIG_SRC}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG_SRC}" && exit 1
+    fi
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    [ -e "${GCFG_FILE_GIT}" ] && exit 0
+    GCFG_FILE_DIR="$(dirname "${GCFG_FILE}")"
+    [ ! -w "${GCFG_FILE_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unwritable directory' "${GCFG_FILE_DIR}" && exit 1
+    GCFG_FILE_GIT_DIR="$(dirname "${GCFG_FILE_GIT}")"
+    [ ! -e "${GCFG_FILE_GIT_DIR}" ] && mkdir -p "${GCFG_FILE_GIT_DIR}"
+    [ ! -d "${GCFG_FILE_GIT_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_GIT_DIR}" && exit 1
+    if [ -e "${GCFG_FILE}" ]; then
+      [ ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Not a regular file' "${GCFG_FILE}" && exit 1
+      [ ! -r "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Unreadable file' "${GCFG_FILE}" && exit 1
+      # ... backup original file
+      if [ -z "${GCFG_FILE_ORIG_SRC}" -a -z "${GCFG_BATCH}" ]; then
+        _gcfg_confirm "${GCFG_ACTION}" 'Do you want to keep a backup of the original file ?'
+        answer="$(_gcfg_answer 'y/n')"
+        [ "${answer}" == 'y' ] && GCFG_FILE_ORIG_SRC="${GCFG_FILE}"
+      fi
+    else
+      # ... create empty file
+      touch "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create file' "${GCFG_FILE}" && exit 1
+      _gcfg_warning "${GCFG_ACTION}" "New file created; check its permissions (${0##*/} perm ...)" "${GCFG_FILE}"
+    fi
+    # ... backup original file
+    if [ -n "${GCFG_FILE_ORIG_SRC}" ]; then
+      GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
+      GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
+      [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
+      [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && exit 1
+      cp -p "${GCFG_FILE_ORIG_SRC}" "${GCFG_FILE_ORIG}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_ORIG_SRC} -> ${GCFG_FILE_ORIG}" && exit 1
+    fi
+    # ... move file to configuration repository
+    mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    # ... symlink actual file to file in configuration repository
+    ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    # ... add file to GIT
+    late_exit=0
+    _gcfg_pushd || exit $?
+    git add "${GCFG_FILE##/}"
+    [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to add file to GIT' "${GCFG_FILE_GIT}"
+    _gcfg_popd || exit $?
+    [ ${late_exit} -ne 0 ] && exit ${late_exit}
+    ;;
+
+  'perm')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    GCFG_CHMOD=; [ $# -ge 1 ] && GCFG_CHMOD="${1}" && shift
+    GCFG_CHOWN=; [ $# -ge 1 ] && GCFG_CHOWN="${1}" && shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existent file' "${GCFG_FILE_GIT}" && exit 1
+    # ... set permissions
+    if [ -n "${GCFG_CHMOD}" ]; then
+      chmod ${GCFG_CHMOD} "${GCFG_FILE_GIT}"
+      [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file access mode' "${GCFG_FILE_GIT}"
+    fi
+    if [ -n "${GCFG_CHOWN}" ]; then
+      chown ${GCFG_CHOWN} "${GCFG_FILE_GIT}"
+      [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file ownership' "${GCFG_FILE_GIT}"
+    fi
+    ls -l "${GCFG_FILE_GIT}"
+    ;;
+
+  'rm')
+    # ... arguments
+    GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}")" || exit $?
+    # ... confirmation
+    if [ -n "${GCFG_BATCH}" ]; then
+      [ ! -e "${GCFG_FILE_GIT}" ] && exit 0
+    else
+      [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existant file' "${GCFG_FILE_GIT}" && exit 1
+      _gcfg_confirm "${GCFG_ACTION}" 'Are you sure you want to remove from the configuration repository ?'
+      [ "$(_gcfg_answer 'y/n')" == 'n' ] && exit 0
+    fi
+    # ... remove file from GIT
+    late_exit=0
+    _gcfg_pushd || exit $?
+    git rm --force "${GCFG_FILE##/}"
+    [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file from GIT' "${GCFG_FILE_GIT}"
+    _gcfg_popd || exit $?
+    [ ${late_exit} -ne 0 ] && exit ${late_exit}
+    # ... remove file flags
+    for flag in "${GCFG_FILE_FLAG}"\{*\}; do
+      rm -f "${flag}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && exit 1
+    done
+    # ... remove actual file
+    if [ -h "${GCFG_FILE}" -o -e "${GCFG_FILE}" ]; then
+      rm -f "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && exit 1
+    fi
+    # ... restore orginal backup file
+    if [ -e "${GCFG_FILE_ORIG}" ]; then
+      mv "${GCFG_FILE_ORIG}" "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE_ORIG} -> ${GCFG_FILE}" && exit 1
+    fi
+    # ... cleanup directories
+    _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
+    ;;
+
+  'add'|'log'|'diff')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    # ... GIT command
+    _gcfg_pushd || exit $?
+    git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
+    _gcfg_popd || exit $?
+    ;;
+
+  'commit')
+    # ... GIT command
+    _gcfg_pushd || exit $?
+    git commit --author "${GCFG_AUTHOR} <${GCFG_EMAIL}>" $*
+    _gcfg_popd || exit $?
+    ;;
+
+  'status'|'push')
+    # ... GIT command
+    _gcfg_pushd || exit $?
+    git ${GCFG_ACTION} $*
+    _gcfg_popd || exit $?
+    ;;
+
+  'orig')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
+    [ ! -r "${GCFG_FILE_ORIG}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG}" && exit 1
+    # ... show file
+    cat "${GCFG_FILE_ORIG}"
+    ;;
+
+  'delta')
+    # ... check
+    [ -z "$(which diff)" ] && _gcfg_error "${GCFG_ACTION}" 'Missing required utility (diff)' && exit 1
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    COMMENT_PREFIX='#'; [ $# -ge 1 ] && COMMENT_PREFIX="${1}" && shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    [ ! -r "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE}" && exit 1
+    GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
+    [ ! -r "${GCFG_FILE_ORIG}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG}" && exit 1
+    # ... show differences
+    if [ -n "${COMMENT_PREFIX}" ]; then
+      diff -uN <(grep -v "^\s*${COMMENT_PREFIX}" "${GCFG_FILE_ORIG}") <(grep -v "^\s*${COMMENT_PREFIX}" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
+    else
+      diff -uN "${GCFG_FILE_ORIG}" "${GCFG_FILE}" | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
+    fi
+    ;;
+
+  'flag')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <flag> parameter' && exit 1
+    GCFG_FLAG="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existant file' "${GCFG_FILE_GIT}" && exit 1
+    GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}" "${GCFG_FLAG}")" || exit $?
+    GCFG_FILE_FLAG_DIR="$(dirname "${GCFG_FILE_FLAG}")"
+    # ... create flag
+    [ ! -e "${GCFG_FILE_FLAG_DIR}" ] && mkdir -p "${GCFG_FILE_FLAG_DIR}"
+    touch "${GCFG_FILE_FLAG}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create file' "${GCFG_FILE_FLAG}" && exit 1
+    ;;
+
+  'flagged')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    GCFG_FLAG=; [ $# -ge 1 ] && GCFG_FLAG="${1}" && shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}" "${GCFG_FLAG}")" || exit $?
+    # ... check flag
+    if [ -n "${GCFG_FLAG}" ]; then
+      [ ! -e "${GCFG_FILE_FLAG}" ] && exit 1 || exit 0
+    fi
+    ls -1 "${GCFG_FILE_FLAG}"\{*\} 2>/dev/null | sed 's/.*{\([^}]*\)}$/\1/'
+    exit ${PIPESTATUS[0]}
+    ;;
+
+  'unflag')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    GCFG_FLAG=; [ $# -ge 1 ] && GCFG_FLAG="${1}" && shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}" "${GCFG_FLAG}")" || exit $?
+    # ... remove flag
+    if [ -n "${GCFG_FLAG}" ]; then
+      [ ! -e "${GCFG_FILE_FLAG}" ] && exit 0
+      rm -f "${GCFG_FILE_FLAG}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_FLAG}" && exit 1
+    else
+      _gcfg_confirm "${GCFG_ACTION}" 'Are you sure you want to remove all flags ?'
+      [ "$(_gcfg_answer 'y/n')" == 'n' ] && exit 0
+      rm -f "${GCFG_FILE_FLAG}"\{*\}
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_FLAG}{*}" && exit 1
+    fi
+    # ... cleanup directories
+    _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
+    ;;
+
+  'verify')
+    # ... loop through files in configuration repository
+    for GCFG_FILE in $(${0} list); do
+      GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || continue
+      GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
+      GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}")" || exit $?
+      # ... check actual file
+      if [ -h "${GCFG_FILE}" ]; then
+        if [ -z "$(ls -l "${GCFG_FILE}" | grep "\-> ${GCFG_FILE_GIT}$")" ]; then
+          # ... invalid symlink
+          _gcfg_warning "${GCFG_ACTION}" 'Actual file is a symlink pointing out of the configuration repository' "$(ls -l "${GCFG_FILE}")"
+          _gcfg_confirm "${GCFG_ACTION}" 'Do you want to restore the symlink to the configuration repository ?'
+          if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+            # ... remove invalid symlink
+            rm -f "${GCFG_FILE}"
+            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
+            # ... symlink actual file to file in configuration repository 
+            ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
+          else
+            _gcfg_confirm "${GCFG_ACTION}" 'Do you want to remove the corresponding file from the configuration repository ?'
+            if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+              # ... remove file from GIT
+              late_exit=0
+              _gcfg_pushd || exit $?
+              git rm --force "${GCFG_FILE##/}"
+              [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}"
+              _gcfg_popd || exit $?
+              [ ${late_exit} -ne 0 ] && continue
+              # ... remove file flags
+              for flag in "${GCFG_FILE_FLAG}"\{*\}; do
+                rm -f "${flag}"
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && continue
+              done
+              # ... remove original backup file
+              if [ -e "${GCFG_FILE_ORIG}" ]; then
+                rm -f "${GCFG_FILE_ORIG}"
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_ORIG}" && continue
+              fi
+              # ... cleanup directories
+              _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
+            fi
+          fi
+        fi
+      else
+        # ... broken link
+        _gcfg_warning "${GCFG_ACTION}" 'Actual file is no longer a symlink poiting to the configuration repository' "${GCFG_FILE}"
+        _gcfg_confirm "${GCFG_ACTION}" 'Do you want to re-synchronize it ?'
+        if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+          if [ -e "${GCFG_FILE}" ]; then
+            [ ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Not a regular file' "${GCFG_FILE}" && continue
+            _gcfg_confirm "${GCFG_ACTION}" 'Do you want to keep the [L]ocal or the [R]epository version ?'
+            if [ "$(_gcfg_answer 'l/r')" == 'l' ]; then
+              # ... copy file back to configuration repository
+              cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+              [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
+            else
+              _gcfg_confirm "${GCFG_ACTION}" 'Do you want to save/update the original backup file ?'
+              if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+                # ... backup original file
+                GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
+                [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
+                [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && continue
+                cp -p "${GCFG_FILE}" "${GCFG_FILE_ORIG}"
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && continue
+              fi
+            fi
+          fi
+          # ... remove invalid actual file
+          rm -f "${GCFG_FILE}"
+          [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
+          # ... symlink actual file to file in configuration repository 
+          ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+          [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
+        fi
+      fi
+    done
+    ;;
+
+esac
+
+
+## Exit
+exit 0
+

@@ -1,0 +1,132 @@
+#!/bin/bash
+# INDENTING (emacs/vi): -*- mode:bash; tab-width:2; c-basic-offset:2; intent-tabs-mode:nil; -*- ex: set tabstop=2 expandtab smartindent shiftwidth=2:
+
+
+## Check invocation
+[ "${BASH_LINENO[0]}" == "0" ] && cat << EOF && exit 1
+ERROR: This script MUST be sourced
+USAGE: source ${0}
+EOF
+
+
+## Functions
+function _gcfg_error {
+  context="${1}"
+  message="${2}"
+  info="${3}"
+  echo "ERROR[${context}]: ${message}" >&2
+  [ -n "${info}" ] && echo ": ${info}" >&2
+  return 0
+}
+
+function _gcfg_warning {
+  context="${1}"
+  message="${2}"
+  info="${3}"
+  echo "WARNING[${context}]: ${message}" >&2
+  [ -n "${info}" ] && echo ": ${info}" >&2
+  return 0
+}
+
+function _gcfg_info {
+  context="${1}"
+  message="${2}"
+  info="${3}"
+  echo "INFO[${context}]: ${message}"
+  [ -n "${info}" ] && echo ": ${info}"
+  return 0
+}
+
+function _gcfg_confirm {
+  context="${1}"
+  message="${2}"
+  echo "CONFIRM[${context}]: ${message}"
+  return 0
+}
+
+function _gcfg_answer {
+  answers="${1}"
+  while true; do
+    echo ": (${answers}) ? " >&2
+    read answer
+    [ "${answer}" == '/' ] && continue
+    [ "${answers/${answer}/}" != "${answers}" ] && break
+  done
+  echo "${answer}"
+  return 0
+}
+
+function _gcfg_check {
+  late_exit=0
+  [ ${late_exit} -eq 0 -a -z "${GCFG_ROOT}" ] && _gcfg_error 'check' 'Undefined configuration root path (GCFG_ROOT)' && late_exit=1
+  [ ${late_exit} -eq 0 -a -z "${GCFG_AUTHOR}" ] && _gcfg_error 'check' 'Undefined author name (GCFG_AUTHOR)' && late_exit=1
+  [ ${late_exit} -eq 0 -a -z "${GCFG_EMAIL}" ] && _gcfg_error 'check' 'Undefined author e-mail address (GCFG_EMAIL)' && late_exit=1
+  [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_GIT}" ] && _gcfg_error 'check' 'Undefined GIT repository path (GCFG_REPO_GIT)' && late_exit=1
+  [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_ORIG}" ] && _gcfg_error 'check' 'Undefined original repository path (GCFG_REPO_ORIG)' && late_exit=1
+  [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_FLAG}" ] && _gcfg_error 'check' 'Undefined flag repository path (GCFG_REPO_FLAG)' && late_exit=1
+  [ ${late_exit} -eq 0 ] && for dir in "${GCFG_ROOT}" "${GCFG_REPO_GIT}/.git" "${GCFG_REPO_ORIG}" "${GCFG_REPO_FLAG}"; do
+    [ ! -d "${dir}" ] && _gcfg_error 'config' 'Invalid configuration repository; not a directory' "${dir}" && late_exit=1 && break
+    [ ! -r "${dir}" ] && _gcfg_error 'config' 'Unreadable configuration repository' "${dir}" && late_exit=1 && break
+    [ ! -w "${dir}" ] && _gcfg_error 'config' 'Unwritable configuration repository' "${dir}" && late_exit=1 && break
+  done
+  [ ${late_exit} -ne 0 ] && _gcfg_info 'check' 'Please make sure to configure GCFG environment' "source gcfg.config '<author-name>' '<author-email>' ['<repo-path>']"
+  return ${late_exit}
+}
+
+function _gcfg_path_canonical {
+  path="${1}"
+  if [ -d "${path}" ]; then
+    pushd "${path}" >/dev/null
+    [ $? -ne 0 ] && _gcfg_error 'path_canonical' 'Failed to switch to directory' "${path}" && return 1
+    path="$(pwd)"
+    popd >/dev/null
+  else
+    dir="$(dirname "${path}")"
+    [ ! -d "${dir}" ] && _gcfg_error 'path_canonical' 'Non-existant parent directory' "${dir}" && return 1
+    pushd "${dir}" >/dev/null
+    [ $? -ne 0 ] && _gcfg_error 'path_canonical' 'Failed to switch to directory' "${dir}" && return 1
+    path="$(pwd)/$(basename "${path}")"
+    popd >/dev/null
+    [ $? -ne 0 ] && _gcfg_error 'path_canonical' 'Failed to switch back out from directory' "${dir}" && return 1
+  fi
+  echo "${path}"
+  return 0
+}
+
+function _gcfg_path_git {
+  echo "${GCFG_REPO_GIT}/${1##/}"
+  return 0
+}
+
+function _gcfg_path_original {
+  echo "${GCFG_REPO_ORIG}/${1##/}"
+  return 0
+}
+
+function _gcfg_path_flag {
+  [ -n "${2}" ] && echo "${GCFG_REPO_FLAG}/${1##/}{${2}}" || echo "${GCFG_REPO_FLAG}/${1##/}"
+  return 0
+}
+
+function _gcfg_pushd {
+  pushd "${GCFG_REPO_GIT}" >/dev/null
+  [ $? -ne 0 ] && _gcfg_error 'pushd' 'Failed to switch to configuration repository' "${GCFG_REPO_GIT}" && return 1
+  return 0
+}
+
+function _gcfg_popd {
+  popd >/dev/null
+  [ $? -ne 0 ] && _gcfg_error 'popd' 'Failed to switch back out of configuration repository' && return 1
+  return 0
+}
+
+function _gcfg_rmdir {
+  dir="${1}"
+  while [ "${dir}" != '/' ]; do
+    rmdir "$(_gcfg_path_git "${dir}")" 2>/dev/null
+    rmdir "$(_gcfg_path_original "${dir}")" 2>/dev/null
+    rmdir "$(_gcfg_path_flag "${dir}")" 2>/dev/null
+    dir="$(dirname "${dir}")"
+  done
+  return 0
+}

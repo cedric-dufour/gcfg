@@ -2,15 +2,16 @@ GIT-based Configuration Tracking Utility (GCFG)
 ===============================================
 
 The objective of this utility is to allow the tracking and versioning of
-(standard configuation) files on a system, in a manner that makes it easy to
+(standard configuration) files on a system, in a manner that makes it easy to
 have a global overview of how the system is configured and what changes were
-performed.
+made.
 
 By default, it uses a centralized repository in '/etc/gcfg' (though an alternate
 directory may be specified when configuring the utility). This directory holds:
- - a GIT repository, used for versioning files changes
- - an "original backup" directory, used to keep a copy of original files
- - a "flag" directory, used to associate flags to files
+ - a GIT repository ('/etc/gcfg/git'), used for versioning files changes
+ - an "original backup" directory ('/etc/gcfg/original'), used to keep a copy of
+   original files
+ - a "flag" directory ('/etc/gcfg/flag'), used to associate flags to files
 
 Before issuing any 'gcfg' commands, one must first configure the utility envi-
 ronment using the 'source gcfg.config' command. The purpose of this command is

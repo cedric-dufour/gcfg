@@ -100,6 +100,7 @@ case "${GCFG_ACTION}" in
     GCFG_FILE="${1}"; shift
     # ... paths
     GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    [ -e "${GCFG_FILE}" -a ! -h "${GCFG_FILE}" -a ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Invalid file type' "${GCFG_FILE}" && exit 1
     GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
     # ... check repository
     if [ ! -e "${GCFG_FILE_GIT}" ]; then
@@ -126,6 +127,7 @@ case "${GCFG_ACTION}" in
     GCFG_FILE_ORIG_SRC=; [ $# -ge 1 ] && GCFG_FILE_ORIG_SRC="${1}" && shift
     # ... paths
     GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    [ -e "${GCFG_FILE}" -a ! -h "${GCFG_FILE}" -a ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Invalid file type' "${GCFG_FILE}" && exit 1
     if [ -n "${GCFG_FILE_ORIG_SRC}" ]; then
       [ ! -r "${GCFG_FILE_ORIG_SRC}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG_SRC}" && exit 1
     fi

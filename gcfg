@@ -243,7 +243,7 @@ case "${GCFG_ACTION}" in
     _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
     ;;
 
-  'add'|'log'|'diff')
+  'add')
     # ... arguments
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
@@ -252,6 +252,23 @@ case "${GCFG_ACTION}" in
     # ... GIT command
     _gcfg_pushd || exit $?
     git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
+    _gcfg_popd || exit $?
+    ;;
+
+  'log'|'diff')
+    # ... arguments
+    GCFG_FILE=; [ $# -ge 1 ] && GCFG_FILE="${1}" && shift
+    # ... paths
+    if [ -n "${GCFG_FILE}" ]; then
+      GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    fi
+    # ... GIT command
+    _gcfg_pushd || exit $?
+    if [ -n "${GCFG_FILE}" ]; then
+      git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
+    else
+      git ${GCFG_ACTION} $*
+    fi
     _gcfg_popd || exit $?
     ;;
 

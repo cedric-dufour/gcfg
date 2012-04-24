@@ -294,11 +294,7 @@ case "${GCFG_ACTION}" in
     GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
     [ ! -r "${GCFG_FILE_ORIG}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG}" && exit 1
     # ... show differences
-    if [ -n "${COMMENT_PREFIX}" ]; then
-      diff -uN <(grep -v "^\s*${COMMENT_PREFIX}" "${GCFG_FILE_ORIG}") <(grep -v "^\s*${COMMENT_PREFIX}" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
-    else
-      diff -uN "${GCFG_FILE_ORIG}" "${GCFG_FILE}" | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
-    fi
+    diff -uN <(egrep -v "^\s*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE_ORIG}") <(egrep -v "^\s*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
     ;;
 
   'flag')

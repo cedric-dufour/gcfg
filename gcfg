@@ -10,8 +10,9 @@ SYNOPSIS:
   Perform the requested action in the configuration repository.
 
 ACTIONS:
-  list
-    List the content of the configuration repository
+  list [<flag>|GIT_<Y-status>|ALL]
+    List the content of the configuration repository (matching the given
+    optional flag or GIT status)
 
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
@@ -62,12 +63,25 @@ _gcfg_check || exit $?
 
 
 ## Action
+GCFG="$(_gcfg_path_canonical "${0}")" || exit $?
 case "${GCFG_ACTION}" in
 
   'list')
+    # ... arguments
+    GCFG_FLAG=; [ $# -ge 1 ] && GCFG_FLAG="${1}" && shift
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
-    find . -not -path './.git/*' -type f | sed 's/^\.*//'
+    find . -not -path './.git/*' -type f | sed 's/^\.*//' | while read GCFG_FILE; do
+      if [ "${GCFG_FLAG}" == 'ALL' ]; then
+        echo "${GCFG_FILE}|FLAG:$(${GCFG} flagged "${GCFG_FILE}" | tr '\n' ',' | sed 's/,$//')|GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')"
+        continue
+      elif [ "${GCFG_FLAG:0:4}" == 'GIT_' ]; then
+          [ -z "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | egrep "^.${GCFG_FLAG#GIT_}[[:space:]]")" ] && continue
+      elif [ -n "${GCFG_FLAG}" ]; then
+        ${GCFG} flagged "${GCFG_FILE}" "${GCFG_FLAG}" || continue
+      fi
+      echo "${GCFG_FILE}"
+    done
     _gcfg_popd || exit $?
     ;;
 
@@ -106,7 +120,7 @@ case "${GCFG_ACTION}" in
     if [ ! -e "${GCFG_FILE_GIT}" ]; then
       _gcfg_confirm "${GCFG_ACTION}" 'File does not exist in the configuration repository; add ?'
       if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-        ${0} new "${GCFG_FILE}" || exit $?
+        ${GCFG} new "${GCFG_FILE}" || exit $?
       fi
     fi
     # ... edit
@@ -115,7 +129,7 @@ case "${GCFG_ACTION}" in
     "${EDITOR}" "${GCFG_FILE}"
     # ... flag
     if [ -e "${GCFG_FILE_GIT}" -a "$(cksum "${GCFG_FILE}" 2>/dev/null)" != "${GCFG_CKSUM}" ]; then
-      ${0} flag "${GCFG_FILE}" edit || exit $?
+      ${GCFG} flag "${GCFG_FILE}" edit || exit $?
     fi
     ;;
 
@@ -311,7 +325,7 @@ case "${GCFG_ACTION}" in
     GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
     [ ! -r "${GCFG_FILE_ORIG}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG}" && exit 1
     # ... show differences
-    diff -uN <(egrep -v "^\s*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE_ORIG}") <(egrep -v "^\s*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
+    diff -uN <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE_ORIG}") <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
     ;;
 
   'flag')
@@ -373,7 +387,7 @@ case "${GCFG_ACTION}" in
 
   'verify')
     # ... loop through files in configuration repository
-    for GCFG_FILE in $(${0} list); do
+    for GCFG_FILE in $(${GCFG} list); do
       GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || continue
       GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
       GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}")" || exit $?

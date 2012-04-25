@@ -8,11 +8,11 @@ made.
 
 By default, it uses a centralized repository in '/etc/gcfg' (though an alternate
 directory may be specified when configuring the utility). This directory holds:
- - a GIT repository ('/etc/gcfg/git'), used for versioning files changes
+ - a GIT repository ('/etc/gcfg/git'), used for versioning changes
  - an "original backup" directory ('/etc/gcfg/original'), used to keep a copy of
    original files
  - a "flag" directory ('/etc/gcfg/flag'), used to associate flags to files
- - a packaged listing file ('/etc/gcfg/pkglist'), automatically updated before
+ - a packages listing file ('/etc/gcfg/pkglist'), automatically updated before
    each commit
 
 Before issuing any 'gcfg' commands, one must first configure the utility envi-
@@ -27,24 +27,24 @@ When a file is added ('gcfg new') or edited ('gcfg edit'):
     Corresponding GIT commands ('gcfg log', 'gcfg diff', 'gcfg commit', etc.)
     then allows to keep track of all changes made to that file.
 
- 2. The GIT-tracked file is then be symlinked back to its original/standard
+ 2. The GIT-tracked file is then symlinked back to its original/standard
     location.
 
- 3. When specified, a copy of the original (pristine) version will be kept in
-    the dedicated backup directory.
+ 3. When specified, a copy of the original (pristine) version is be kept in the
+    dedicated backup directory.
     The original version is then always handy thanks to the 'gcfg orig' command,
     while relative changes (diff) may be seen using the 'gcfg delta' command.
 
- 4. Flags may also be associated to the file, for any purpose that may be
+ 4. Flags can also be associated to the file, for any purpose that may be
     required by the operator. One such flag is the "@EDITED" flag, which is set
     as soon as the file has been modified with 'gcfg edit'.
-    Flags management is performed using the 'gcfg flag', 'gcfg flagged' and
-    'gcfg unflag' commands.
+    Flags management is performed using the 'gcfg flag', 'gcfg unflag' and
+    'gcfg flagged' commands.
 
 A global overview of changes can then easily be obtained using the 'gcfg list'
 command, or even saved in a Postscript file using the 'gcfg a2ps' command.
 All modified files being within the scope of a single GIT repository, backup,
-versions tracking and collaborative modifications may easily performed thanks
+versions tracking and collaborative management are easily performed thanks
 to GIT.
 
 

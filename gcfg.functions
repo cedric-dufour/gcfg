@@ -64,6 +64,7 @@ function _gcfg_check {
   [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_GIT}" ] && _gcfg_error 'check' 'Undefined GIT repository path (GCFG_REPO_GIT)' && late_exit=1
   [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_ORIG}" ] && _gcfg_error 'check' 'Undefined original repository path (GCFG_REPO_ORIG)' && late_exit=1
   [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_FLAG}" ] && _gcfg_error 'check' 'Undefined flag repository path (GCFG_REPO_FLAG)' && late_exit=1
+  [ ${late_exit} -eq 0 -a -z "${GCFG_REPO_PKGLIST}" ] && _gcfg_error 'check' 'Undefined packages listing path (GCFG_REPO_PKGLIST)' && late_exit=1
   [ ${late_exit} -eq 0 ] && for dir in "${GCFG_ROOT}" "${GCFG_REPO_GIT}/.git" "${GCFG_REPO_ORIG}" "${GCFG_REPO_FLAG}"; do
     [ ! -d "${dir}" ] && _gcfg_error 'config' 'Invalid configuration repository; not a directory' "${dir}" && late_exit=1 && break
     [ ! -r "${dir}" ] && _gcfg_error 'config' 'Unreadable configuration repository' "${dir}" && late_exit=1 && break

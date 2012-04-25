@@ -10,31 +10,27 @@ SYNOPSIS:
   Perform the requested action in the configuration repository.
 
 ACTIONS:
-  list [<flag>|DETAIL]
+  list [<flag>|@FLAGS]
     List the content of the configuration repository (matching the given
     optional flag or GIT status)
 
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
 
+  new [--batch] <file> [<original-file>]
+  rm [--batch] <file>
+    Add/remove the given file to/from the configuration repository
+
   edit <file>
     Edit the given file (after adding it to the configuration repository)
-
-  new [--batch] <file> [<original-file>]
-    Add the given file to the configuration repository
 
   perm <file> [<mode> [<ownership>]]
     Show/change the permissions of the given file
 
-  rm [--batch] <file>
-    Remove the given file from the configuration repository
-
-  add|log|diff <file> [<options> ...]
-    Perform the corresponding GIT action on the given file 
-    (see 'git help ...' for available options)
-
+  add <file> [<options> ...]
+  log|diff [<file>] [<options> ...]
   status|commit|push [<options> ...]
-    Perform the corresponding GIT action
+    Perform the corresponding GIT action on the given file 
     (see 'git help ...' for available options)
 
   orig <file>
@@ -44,7 +40,8 @@ ACTIONS:
     Show the differences between the given file and its original version,
     with all comments stripped out
 
-  flag|flagged|unflag <file> [<flag>]
+  flag|unflag <file> <flag>
+  flagged <file> [<flag>]
     Set|show/check|remove the specified flag for the given file
 
   verify
@@ -72,10 +69,13 @@ case "${GCFG_ACTION}" in
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
     find . -not -path './.git/*' -type f | sed 's/^\.*//' | while read GCFG_FILE; do
-      if [ "${GCFG_FLAG}" == 'DETAIL' ]; then
+      if [ "${GCFG_FLAG}" == '@FLAGS' ]; then
         flags="$(gcfg flagged "${GCFG_FILE}" | tr '\n' ',' | sed 's/,$//')"
-        echo "${GCFG_FILE}|${flags}${flags:+,}@GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')"
+        gitstat="@GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')__"
+        echo "${GCFG_FILE}|${flags}${flags:+,}${gitstat:0:7}"
         continue
+      elif [ "${GCFG_FLAG}" == '@GIT:  ' ]; then
+          [ -n "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null)" ] && continue
       elif [ "${GCFG_FLAG:0:5}" == '@GIT:' ]; then
           [ -z "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | egrep "^${GCFG_FLAG#@GIT:}[[:space:]]")" ] && continue
       elif [ -n "${GCFG_FLAG}" ]; then
@@ -107,31 +107,6 @@ case "${GCFG_ACTION}" in
     chmod 600 "${GCFG_FILE}"
     [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file access mode' "${GCFG_FILE}"
     _gcfg_popd || exit $?
-    ;;
-
-  'edit')
-    # ... arguments
-    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
-    GCFG_FILE="${1}"; shift
-    # ... paths
-    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
-    [ -e "${GCFG_FILE}" -a ! -h "${GCFG_FILE}" -a ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Invalid file type' "${GCFG_FILE}" && exit 1
-    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
-    # ... check repository
-    if [ ! -e "${GCFG_FILE_GIT}" ]; then
-      _gcfg_confirm "${GCFG_ACTION}" 'File does not exist in the configuration repository; add ?'
-      if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-        gcfg new "${GCFG_FILE}" || exit $?
-      fi
-    fi
-    # ... edit
-    GCFG_CKSUM="$(cksum "${GCFG_FILE}" 2>/dev/null)"
-    [ -z "${EDITOR}" ] && EDITOR=vim
-    "${EDITOR}" "${GCFG_FILE}"
-    # ... flag
-    if [ -e "${GCFG_FILE_GIT}" -a "$(cksum "${GCFG_FILE}" 2>/dev/null)" != "${GCFG_CKSUM}" ]; then
-      gcfg flag "${GCFG_FILE}" '@EDITED' || exit $?
-    fi
     ;;
 
   'new')
@@ -192,28 +167,6 @@ case "${GCFG_ACTION}" in
     [ ${late_exit} -ne 0 ] && exit ${late_exit}
     ;;
 
-  'perm')
-    # ... arguments
-    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
-    GCFG_FILE="${1}"; shift
-    GCFG_CHMOD=; [ $# -ge 1 ] && GCFG_CHMOD="${1}" && shift
-    GCFG_CHOWN=; [ $# -ge 1 ] && GCFG_CHOWN="${1}" && shift
-    # ... paths
-    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
-    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
-    [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existent file' "${GCFG_FILE_GIT}" && exit 1
-    # ... set permissions
-    if [ -n "${GCFG_CHMOD}" ]; then
-      chmod ${GCFG_CHMOD} "${GCFG_FILE_GIT}"
-      [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file access mode' "${GCFG_FILE_GIT}"
-    fi
-    if [ -n "${GCFG_CHOWN}" ]; then
-      chown ${GCFG_CHOWN} "${GCFG_FILE_GIT}"
-      [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file ownership' "${GCFG_FILE_GIT}"
-    fi
-    ls -l "${GCFG_FILE_GIT}"
-    ;;
-
   'rm')
     # ... arguments
     GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
@@ -258,6 +211,53 @@ case "${GCFG_ACTION}" in
     _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
     ;;
 
+  'edit')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    [ -e "${GCFG_FILE}" -a ! -h "${GCFG_FILE}" -a ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Invalid file type' "${GCFG_FILE}" && exit 1
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    # ... check repository
+    if [ ! -e "${GCFG_FILE_GIT}" ]; then
+      _gcfg_confirm "${GCFG_ACTION}" 'File does not exist in the configuration repository; add ?'
+      if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+        gcfg new "${GCFG_FILE}" || exit $?
+      fi
+    fi
+    # ... edit
+    GCFG_CKSUM="$(cksum "${GCFG_FILE}" 2>/dev/null)"
+    [ -z "${EDITOR}" ] && EDITOR=vim
+    "${EDITOR}" "${GCFG_FILE}"
+    # ... flag
+    if [ -e "${GCFG_FILE_GIT}" -a "$(cksum "${GCFG_FILE}" 2>/dev/null)" != "${GCFG_CKSUM}" ]; then
+      gcfg flag "${GCFG_FILE}" '@EDITED' || exit $?
+    fi
+    ;;
+
+  'perm')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    GCFG_CHMOD=; [ $# -ge 1 ] && GCFG_CHMOD="${1}" && shift
+    GCFG_CHOWN=; [ $# -ge 1 ] && GCFG_CHOWN="${1}" && shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existent file' "${GCFG_FILE_GIT}" && exit 1
+    # ... set permissions
+    if [ -n "${GCFG_CHMOD}" ]; then
+      chmod ${GCFG_CHMOD} "${GCFG_FILE_GIT}"
+      [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file access mode' "${GCFG_FILE_GIT}"
+    fi
+    if [ -n "${GCFG_CHOWN}" ]; then
+      chown ${GCFG_CHOWN} "${GCFG_FILE_GIT}"
+      [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file ownership' "${GCFG_FILE_GIT}"
+    fi
+    ls -l "${GCFG_FILE_GIT}"
+    ;;
+
   'add')
     # ... arguments
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
@@ -288,6 +288,17 @@ case "${GCFG_ACTION}" in
     ;;
 
   'commit')
+    # ... packages listing
+    pkglist="$(aptitude search --disable-columns --display-format '%p' --sort 'name' '?and(?installed,?not(?automatic))')"
+    if [ -n "$(diff -q "${GCFG_REPO_PKGLIST}" <(echo "${pkglist}"))" ]; then
+      _gcfg_confirm "${GCFG_ACTION}" 'Do you want to update the package listing now ?'
+      answer="$(_gcfg_answer 'y/n')"
+      if [ "${answer}" == 'y' ]; then
+        echo "${pkglist}" > "${GCFG_REPO_PKGLIST}"
+        [ $? -ne 0 ] && _gcfg_error 'config' 'Failed to initialize packages listing' "${GCFG_REPO_PKGLIST}" && exit 1
+        gcfg add "${GCFG_REPO_PKGLIST}" || exit $?
+      fi
+    fi
     # ... GIT command
     _gcfg_pushd || exit $?
     git commit --author "${GCFG_AUTHOR} <${GCFG_EMAIL}>" $*

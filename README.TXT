@@ -12,6 +12,8 @@ directory may be specified when configuring the utility). This directory holds:
  - an "original backup" directory ('/etc/gcfg/original'), used to keep a copy of
    original files
  - a "flag" directory ('/etc/gcfg/flag'), used to associate flags to files
+ - a packaged listing file ('/etc/gcfg/pkglist'), automatically updated before
+   each commit
 
 Before issuing any 'gcfg' commands, one must first configure the utility envi-
 ronment using the 'source gcfg.config' command. The purpose of this command is
@@ -34,8 +36,8 @@ When a file is added ('gcfg new') or edited ('gcfg edit'):
     while relative changes (diff) may be seen using the 'gcfg delta' command.
 
  4. Flags may also be associated to the file, for any purpose that may be
-    required by the operator. One such flag is the "edit" flag, which is set as
-    soon as the file is edited with 'gcfg edit'.
+    required by the operator. One such flag is the "@EDITED" flag, which is set
+    as soon as the file has been modified with 'gcfg edit'.
     Flags management is performed using the 'gcfg flag', 'gcfg flagged' and
     'gcfg unflag' commands.
 
@@ -54,30 +56,27 @@ SYNOPSIS:
   Perform the requested action in the configuration repository.
 
 ACTIONS:
-  list
-    List the content of the configuration repository
+  list [<flag>|@FLAGS]
+    List the content of the configuration repository (matching the given
+    optional flag or GIT status)
 
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
 
+  new [--batch] <file> [<original-file>]
+  rm [--batch] <file>
+    Add/remove the given file to/from the configuration repository
+
   edit <file>
     Edit the given file (after adding it to the configuration repository)
-
-  new [--batch] <file> [<original-file>]
-    Add the given file to the configuration repository
 
   perm <file> [<mode> [<ownership>]]
     Show/change the permissions of the given file
 
-  rm [--batch] <file>
-    Remove the given file from the configuration repository
-
-  add|log|diff <file> [<options> ...]
-    Perform the corresponding GIT action on the given file 
-    (see 'git help ...' for available options)
-
+  add <file> [<options> ...]
+  log|diff [<file>] [<options> ...]
   status|commit|push [<options> ...]
-    Perform the corresponding GIT action
+    Perform the corresponding GIT action on the given file 
     (see 'git help ...' for available options)
 
   orig <file>
@@ -87,10 +86,10 @@ ACTIONS:
     Show the differences between the given file and its original version,
     with all comments stripped out
 
-  flag|flagged|unflag <file> [<flag>]
+  flag|unflag <file> <flag>
+  flagged <file> [<flag>]
     Set|show/check|remove the specified flag for the given file
 
   verify
     Verify the consistency between the configuration repository and the actual
     files
-

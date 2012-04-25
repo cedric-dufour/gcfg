@@ -10,7 +10,7 @@ SYNOPSIS:
   Perform the requested action in the configuration repository.
 
 ACTIONS:
-  list [<flag>|GIT_<Y-status>|ALL]
+  list [<flag>|GIT_<Y-status>|DETAIL]
     List the content of the configuration repository (matching the given
     optional flag or GIT status)
 
@@ -72,7 +72,7 @@ case "${GCFG_ACTION}" in
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
     find . -not -path './.git/*' -type f | sed 's/^\.*//' | while read GCFG_FILE; do
-      if [ "${GCFG_FLAG}" == 'ALL' ]; then
+      if [ "${GCFG_FLAG}" == 'DETAIL' ]; then
         echo "${GCFG_FILE}|FLAG:$(${GCFG} flagged "${GCFG_FILE}" | tr '\n' ',' | sed 's/,$//')|GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')"
         continue
       elif [ "${GCFG_FLAG:0:4}" == 'GIT_' ]; then
@@ -358,7 +358,7 @@ case "${GCFG_ACTION}" in
     if [ -n "${GCFG_FLAG}" ]; then
       [ ! -e "${GCFG_FILE_FLAG}" ] && exit 1 || exit 0
     fi
-    ls -1 "${GCFG_FILE_FLAG}"\{*\} 2>/dev/null | sed 's/.*{\([^}]*\)}$/\1/'
+    ls -1 "${GCFG_FILE_FLAG}"\{*\} 2>/dev/null | sed 's/.*{\([^}]*\)}$/\1/' | sort
     exit ${PIPESTATUS[0]}
     ;;
 

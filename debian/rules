@@ -35,7 +35,7 @@ install: build
 
 	# ... DEB_PACKAGE
 	mkdir -p debian/$(DEB_PACKAGE)/usr/bin
-	cp gcfg debian/$(DEB_PACKAGE)/usr/bin/.
+	cp gcfg pkglist debian/$(DEB_PACKAGE)/usr/bin/.
 	mkdir -p debian/$(DEB_PACKAGE)/usr/share/$(DEB_PACKAGE)
 	cp gcfg.functions gcfg.config debian/$(DEB_PACKAGE)/usr/share/$(DEB_PACKAGE)/.
 	ln -s /usr/share/$(DEB_PACKAGE)/gcfg.functions debian/$(DEB_PACKAGE)/usr/bin/gcfg.functions

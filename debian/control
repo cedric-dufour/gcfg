@@ -6,6 +6,6 @@ Build-Depends: debhelper (>= 5)
 
 Package: gcfg
 Architecture: all
-Depends: bash, lsb-release, git-core
+Depends: bash, lsb-release, git-core, aptitude
 Recommends: diffutils, a2ps
 Description: GIT-based Configuration Tracking Utility (GCFG)

@@ -10,7 +10,7 @@ SYNOPSIS:
   Perform the requested action in the configuration repository.
 
 ACTIONS:
-  list [<flag>|GIT_<Y-status>|DETAIL]
+  list [<flag>|DETAIL]
     List the content of the configuration repository (matching the given
     optional flag or GIT status)
 
@@ -63,22 +63,23 @@ _gcfg_check || exit $?
 
 
 ## Action
-GCFG="$(_gcfg_path_canonical "${0}")" || exit $?
 case "${GCFG_ACTION}" in
 
   'list')
     # ... arguments
     GCFG_FLAG=; [ $# -ge 1 ] && GCFG_FLAG="${1}" && shift
+    [ "${GCFG_FLAG:0:5}" == '@GIT:' ] && GCFG_FLAG="${GCFG_FLAG//_/ }  " && GCFG_FLAG="${GCFG_FLAG:0:7}"
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
     find . -not -path './.git/*' -type f | sed 's/^\.*//' | while read GCFG_FILE; do
       if [ "${GCFG_FLAG}" == 'DETAIL' ]; then
-        echo "${GCFG_FILE}|FLAG:$(${GCFG} flagged "${GCFG_FILE}" | tr '\n' ',' | sed 's/,$//')|GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')"
+        flags="$(gcfg flagged "${GCFG_FILE}" | tr '\n' ',' | sed 's/,$//')"
+        echo "${GCFG_FILE}|${flags}${flags:+,}@GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')"
         continue
-      elif [ "${GCFG_FLAG:0:4}" == 'GIT_' ]; then
-          [ -z "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | egrep "^.${GCFG_FLAG#GIT_}[[:space:]]")" ] && continue
+      elif [ "${GCFG_FLAG:0:5}" == '@GIT:' ]; then
+          [ -z "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | egrep "^${GCFG_FLAG#@GIT:}[[:space:]]")" ] && continue
       elif [ -n "${GCFG_FLAG}" ]; then
-        ${GCFG} flagged "${GCFG_FILE}" "${GCFG_FLAG}" || continue
+        gcfg flagged "${GCFG_FILE}" "${GCFG_FLAG}" || continue
       fi
       echo "${GCFG_FILE}"
     done
@@ -120,7 +121,7 @@ case "${GCFG_ACTION}" in
     if [ ! -e "${GCFG_FILE_GIT}" ]; then
       _gcfg_confirm "${GCFG_ACTION}" 'File does not exist in the configuration repository; add ?'
       if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-        ${GCFG} new "${GCFG_FILE}" || exit $?
+        gcfg new "${GCFG_FILE}" || exit $?
       fi
     fi
     # ... edit
@@ -129,7 +130,7 @@ case "${GCFG_ACTION}" in
     "${EDITOR}" "${GCFG_FILE}"
     # ... flag
     if [ -e "${GCFG_FILE_GIT}" -a "$(cksum "${GCFG_FILE}" 2>/dev/null)" != "${GCFG_CKSUM}" ]; then
-      ${GCFG} flag "${GCFG_FILE}" edit || exit $?
+      gcfg flag "${GCFG_FILE}" '@EDITED' || exit $?
     fi
     ;;
 
@@ -387,7 +388,7 @@ case "${GCFG_ACTION}" in
 
   'verify')
     # ... loop through files in configuration repository
-    for GCFG_FILE in $(${GCFG} list); do
+    for GCFG_FILE in $(gcfg list); do
       GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || continue
       GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
       GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}")" || exit $?

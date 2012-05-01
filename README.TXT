@@ -20,7 +20,7 @@ ronment using the 'source gcfg.config' command. The purpose of this command is
 both to verify/create the centralized repository and save the details of the
 current author.
 
-When a file is added ('gcfg new') or edited ('gcfg edit'):
+When a file is added ('gcfg new'), copied ('gcfg copy') or edited ('gcfg edit'):
 
  1. It is first moved within the scope of the GIT repository, keeping its
     absolute (but therefrom relative) path.
@@ -66,6 +66,10 @@ ACTIONS:
   new [--batch] <file> [<original-file>]
   rm [--batch] <file>
     Add/remove the given file to/from the configuration repository
+
+  copy [--batch] [--force] <file> <source>
+    Copy the given file from the given source, provided it has not been
+    edited (unless '--force' is specified)
 
   edit <file>
     Edit the given file (after adding it to the configuration repository)

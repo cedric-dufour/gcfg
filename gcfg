@@ -21,8 +21,16 @@ ACTIONS:
   rm [--batch] <file>
     Add/remove the given file to/from the configuration repository
 
+  copy [--batch] [--force] <file> <source>
+    Copy the given file from the given source, provided it has not been
+    edited (unless '--force' is specified)
+
   edit <file>
     Edit the given file (after adding it to the configuration repository)
+
+  install [--batch] <file> <source>
+    Copy the given file from the given source (and add it to the configuration
+    repository)
 
   perm <file> [<mode> [<ownership>]]
     Show/change the permissions of the given file
@@ -209,6 +217,45 @@ case "${GCFG_ACTION}" in
     fi
     # ... cleanup directories
     _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
+    ;;
+
+  'copy')
+    # ... arguments
+    GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+    GCFG_FORCE=; [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <source> parameter' && exit 1
+    GCFG_SOURCE="${1}"; shift
+    [ ! -f "${GCFG_SOURCE}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/invalid file' "${GCFG_SOURCE}" && exit 1
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    [ -e "${GCFG_FILE}" -a ! -h "${GCFG_FILE}" -a ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Invalid file type' "${GCFG_FILE}" && exit 1
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    # ... install
+    if [ -e "${GCFG_FILE}" ]; then
+      if [ -n "${GCFG_BATCH}" ]; then
+        gcfg new --batch "${GCFG_FILE}" "${GCFG_FILE}" || exit $?
+      else
+        gcfg new "${GCFG_FILE}" || exit $?
+      fi
+      if gcfg flagged "${GCFG_FILE}" '@EDITED'; then
+        if [ -z "${GCFG_FORCE}" ]; then
+          _gcfg_warning "${GCFG_ACTION}" 'File already exists and has been modified; skipping...' "${GCFG_SOURCE} x> ${GCFG_FILE}"
+        else
+          gcfg unflag "${GCFG_FILE}" '@EDITED' || exit $?
+        fi
+      else
+        cp -p "${GCFG_SOURCE}" "${GCFG_FILE}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_SOURCE} -> ${GCFG_FILE}" && exit 1
+        _gcfg_info "${GCFG_ACTION}" 'File copied successfully' "${GCFG_SOURCE} -> ${GCFG_FILE}"
+      fi
+    else
+      cp -p "${GCFG_SOURCE}" "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_SOURCE} -> ${GCFG_FILE}" && exit 1
+      _gcfg_info "${GCFG_ACTION}" 'File copied successfully' "${GCFG_SOURCE} -> ${GCFG_FILE}"
+      gcfg new --batch "${GCFG_FILE}" || exit $?
+    fi
     ;;
 
   'edit')

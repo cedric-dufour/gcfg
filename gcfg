@@ -384,7 +384,11 @@ case "${GCFG_ACTION}" in
     GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
     [ ! -r "${GCFG_FILE_ORIG}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG}" && exit 1
     # ... show differences
-    diff -uN <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE_ORIG}") <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
+    if [ -t 1 ]; then
+      diff -uN <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE_ORIG}") <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE}") | sed "/^\(---\|+++\)/d;s/^+/$(printf '\e[32m')+/;s/^-/$(printf '\e[31m')-/;s/^@/$(printf '\e[36m')@/;s/$/$(printf '\e[0m')/"
+    else
+      diff -uN <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE_ORIG}") <(egrep -v "^[[:space:]]*(${COMMENT_PREFIX}${COMMENT_PREFIX:+|}$)" "${GCFG_FILE}")
+    fi
     ;;
 
   'flag')

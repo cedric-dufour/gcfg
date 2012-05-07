@@ -18,11 +18,11 @@ ACTIONS:
     Create a Postscript document with all files in the configuration repository
 
   new [--batch] <file> [<original-file>]
-  rm [--batch] <file>
-    Add/remove the given file to/from the configuration repository
+    Add the given file to/from the configuration repository
 
   copy [--batch] [--force] <file> <source>
-    Copy the given file from the given source, provided it has not been
+  rm [--batch] [--force] <file>
+    Copy/remove the given file from the given source, provided it has not been
     edited (unless '--force' is specified)
 
   edit <file>
@@ -173,11 +173,13 @@ case "${GCFG_ACTION}" in
     [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to add file to GIT' "${GCFG_FILE_GIT}"
     _gcfg_popd || exit $?
     [ ${late_exit} -ne 0 ] && exit ${late_exit}
+    _gcfg_info "${GCFG_ACTION}" 'File successfully added to configuration repository' "${GCFG_FILE}"
     ;;
 
   'rm')
     # ... arguments
     GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+    GCFG_FORCE=; [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
     # ... paths
@@ -188,6 +190,12 @@ case "${GCFG_ACTION}" in
     # ... confirmation
     if [ -n "${GCFG_BATCH}" ]; then
       [ ! -e "${GCFG_FILE_GIT}" ] && exit 0
+      if gcfg flagged "${GCFG_FILE}" '@EDITED'; then
+        if [ -z "${GCFG_FORCE}" ]; then
+          _gcfg_warning "${GCFG_ACTION}" 'File has been modified; skipping...' "${GCFG_FILE}"
+          exit 0
+        fi
+      fi
     else
       [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existant file' "${GCFG_FILE_GIT}" && exit 1
       _gcfg_confirm "${GCFG_ACTION}" 'Are you sure you want to remove from the configuration repository ?'
@@ -196,7 +204,7 @@ case "${GCFG_ACTION}" in
     # ... remove file from GIT
     late_exit=0
     _gcfg_pushd || exit $?
-    git rm --force "${GCFG_FILE##/}"
+    git rm --force "${GCFG_FILE##/}" >/dev/null
     [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file from GIT' "${GCFG_FILE_GIT}"
     _gcfg_popd || exit $?
     [ ${late_exit} -ne 0 ] && exit ${late_exit}
@@ -214,6 +222,9 @@ case "${GCFG_ACTION}" in
     if [ -e "${GCFG_FILE_ORIG}" ]; then
       mv "${GCFG_FILE_ORIG}" "${GCFG_FILE}"
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE_ORIG} -> ${GCFG_FILE}" && exit 1
+      _gcfg_info "${GCFG_ACTION}" 'Original file successfully restored' "${GCFG_FILE}"
+    else
+      _gcfg_info "${GCFG_ACTION}" 'File successfully removed' "${GCFG_FILE}"
     fi
     # ... cleanup directories
     _gcfg_rmdir "$(dirname "${GCFG_FILE}")"

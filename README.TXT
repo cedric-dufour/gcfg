@@ -64,11 +64,11 @@ ACTIONS:
     Create a Postscript document with all files in the configuration repository
 
   new [--batch] <file> [<original-file>]
-  rm [--batch] <file>
-    Add/remove the given file to/from the configuration repository
+    Add the given file to/from the configuration repository
 
   copy [--batch] [--force] <file> <source>
-    Copy the given file from the given source, provided it has not been
+  rm [--batch] [--force] <file>
+    Copy/remove the given file from the given source, provided it has not been
     edited (unless '--force' is specified)
 
   edit <file>

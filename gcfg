@@ -161,7 +161,7 @@ case "${GCFG_ACTION}" in
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_ORIG_SRC} -> ${GCFG_FILE_ORIG}" && exit 1
     fi
     # ... move file to configuration repository
-    mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+    cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}" && rm "${GCFG_FILE}" || false
     [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
     # ... symlink actual file to file in configuration repository
     ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"

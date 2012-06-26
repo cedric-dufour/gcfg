@@ -149,7 +149,7 @@ case "${GCFG_ACTION}" in
       # ... create empty file
       touch "${GCFG_FILE}"
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create file' "${GCFG_FILE}" && exit 1
-      _gcfg_warning "${GCFG_ACTION}" "New file created; check its permissions (${0##*/} perm ...)" "${GCFG_FILE}"
+      _gcfg_warning "${GCFG_ACTION}" "New file created; check its permissions ('${0##*/} perm ...')" "${GCFG_FILE}"
     fi
     # ... backup original file
     if [ -n "${GCFG_FILE_ORIG_SRC}" ]; then
@@ -161,11 +161,15 @@ case "${GCFG_ACTION}" in
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_ORIG_SRC} -> ${GCFG_FILE_ORIG}" && exit 1
     fi
     # ... move file to configuration repository
-    cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}" && rm "${GCFG_FILE}" || false
+    cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}" && rm -f "${GCFG_FILE}"
     [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
-    # ... symlink actual file to file in configuration repository
-    ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    # ... hard-link actual file to file in configuration repository
+    ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+    if [ $? -ne 0 ]; then
+      _gcfg_warning "${GCFG_ACTION}" "File cannot be hard-linked; copying instead (use '${0##*/} verify ...' to keep in sync.)" "${GCFG_FILE}"
+      cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && exit 1
+    fi
     # ... add file to GIT
     late_exit=0
     _gcfg_pushd || exit $?
@@ -466,19 +470,25 @@ case "${GCFG_ACTION}" in
       GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
       GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}")" || exit $?
       # ... check actual file
-      if [ -h "${GCFG_FILE}" ]; then
-        if [ -z "$(ls -l "${GCFG_FILE}" | grep "\-> ${GCFG_FILE_GIT}$")" ]; then
-          # ... invalid symlink
-          _gcfg_warning "${GCFG_ACTION}" 'Actual file is a symlink pointing out of the configuration repository' "$(ls -l "${GCFG_FILE}")"
-          _gcfg_confirm "${GCFG_ACTION}" 'Do you want to restore the symlink to the configuration repository ?'
-          if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-            # ... remove invalid symlink
-            rm -f "${GCFG_FILE}"
-            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
-            # ... symlink actual file to file in configuration repository 
-            ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
-          else
+      if [ -h "${GCFG_FILE}" -a -n "$(ls -l "${GCFG_FILE}" | grep "\-> ${GCFG_FILE_GIT}$")" ]; then
+        # ... file is a symlink
+        rm -f "${GCFG_FILE}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
+        # ... re-synch
+        ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+        if [ $? -ne 0 ]; then
+          _gcfg_warning "${GCFG_ACTION}" "File cannot be hard-linked; copying instead (use '${0##*/} verify ...' to keep in sync.)" "${GCFG_FILE}"
+          cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+          [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && continue
+        fi
+      fi
+      if [ ! -e "${GCFG_FILE}" -o -n "$(diff -q "${GCFG_FILE}" "${GCFG_FILE_GIT}")" ]; then
+        # ... file differs
+        _gcfg_warning "${GCFG_ACTION}" 'Actual file is missing or different from the one in the configuration repository' "$(ls -l "${GCFG_FILE}" 2>&1)"
+        _gcfg_confirm "${GCFG_ACTION}" 'Do you want to re-synchronize with the configuration repository ?'
+        if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+          if [ ! -e "${GCFG_FILE}" ]; then
+            # ... purge ?
             _gcfg_confirm "${GCFG_ACTION}" 'Do you want to remove the corresponding file from the configuration repository ?'
             if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
               # ... remove file from GIT
@@ -500,19 +510,16 @@ case "${GCFG_ACTION}" in
               fi
               # ... cleanup directories
               _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
+              # ... done
+              continue
             fi
           fi
-        fi
-      else
-        # ... broken link
-        _gcfg_warning "${GCFG_ACTION}" 'Actual file is no longer a symlink poiting to the configuration repository' "${GCFG_FILE}"
-        _gcfg_confirm "${GCFG_ACTION}" 'Do you want to re-synchronize it ?'
-        if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
           if [ -e "${GCFG_FILE}" ]; then
+            # ... actual file exists
             [ ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Not a regular file' "${GCFG_FILE}" && continue
             _gcfg_confirm "${GCFG_ACTION}" 'Do you want to keep the [L]ocal or the [R]epository version ?'
             if [ "$(_gcfg_answer 'l/r')" == 'l' ]; then
-              # ... copy file back to configuration repository
+              # ... move file back to configuration repository
               cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}"
               [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
             else
@@ -526,13 +533,16 @@ case "${GCFG_ACTION}" in
                 [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && continue
               fi
             fi
+            rm -f "${GCFG_FILE}"
+            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
           fi
-          # ... remove invalid actual file
-          rm -f "${GCFG_FILE}"
-          [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
-          # ... symlink actual file to file in configuration repository 
-          ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-          [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
+          # ... re-synch
+          ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+          if [ $? -ne 0 ]; then
+            _gcfg_warning "${GCFG_ACTION}" "File cannot be hard-linked; copying instead (use '${0##*/} verify ...' to keep in sync.)" "${GCFG_FILE}"
+            cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && continue
+          fi
         fi
       fi
     done

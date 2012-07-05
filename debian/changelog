@@ -1,3 +1,9 @@
+gcfg (0.9.20120626) UNRELEASED; urgency=low
+
+  * New version (see https://github.com/cedric-dufour/gcfg for changelog)
+
+ -- Cedric Dufour <cedric.dufour@idiap.ch>  Tue, 26 Jun 2012 17:20:41 +0200
+
 gcfg (0.9.20120507) UNRELEASED; urgency=low
 
   * New version (see https://github.com/cedric-dufour/gcfg for changelog)

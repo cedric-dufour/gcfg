@@ -73,19 +73,17 @@ case "${GCFG_ACTION}" in
   'list')
     # ... arguments
     GCFG_FLAG=; [ $# -ge 1 ] && GCFG_FLAG="${1}" && shift
-    [ "${GCFG_FLAG:0:5}" == '@GIT:' ] && GCFG_FLAG="${GCFG_FLAG//_/ }  " && GCFG_FLAG="${GCFG_FLAG:0:7}"
+    [ "${GCFG_FLAG:0:5}" == '@GIT:' ] && GCFG_FLAG="${GCFG_FLAG:0:7}"
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
-    find . -not -path './.git/*' -type f | sed 's/^\.*//' | while read GCFG_FILE; do
+    git status --porcelain | sed 's/^\(..\) \(.*\)$/\/\2|@GIT:\1/;s/ /_/g'  | while read GIT_FILE; do
+      gitstat="${GIT_FILE#*|}"
+      GCFG_FILE="${GIT_FILE%|*}"
       if [ "${GCFG_FLAG}" == '@FLAGS' ]; then
-        flags="$(gcfg flagged "${GCFG_FILE}" | tr '\n' ',' | sed 's/,$//')"
-        gitstat="@GIT:$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | sed 's/^\(..\) .*/\1/;s/ /_/g')__"
-        echo "${GCFG_FILE}|${flags}${flags:+,}${gitstat:0:7}"
+        echo "${GCFG_FILE}|$(ls -1 "$(_gcfg_path_flag "${GCFG_FILE}")"\{*\} 2>/dev/null | sed 's/.*{\([^}]*\)}$/\1/' | sort | tr '\n' ',')${gitstat}"
         continue
-      elif [ "${GCFG_FLAG}" == '@GIT:  ' ]; then
-          [ -n "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null)" ] && continue
       elif [ "${GCFG_FLAG:0:5}" == '@GIT:' ]; then
-          [ -z "$(git status --porcelain -- "${GCFG_FILE##/}" 2>/dev/null | egrep "^${GCFG_FLAG#@GIT:}[[:space:]]")" ] && continue
+        [ "${gitstat:5:2}" == "${GCFG_FLAG:5:2}" ] || continue 
       elif [ -n "${GCFG_FLAG}" ]; then
         gcfg flagged "${GCFG_FILE}" "${GCFG_FLAG}" || continue
       fi

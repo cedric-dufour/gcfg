@@ -109,7 +109,7 @@ case "${GCFG_ACTION}" in
     fi
     # ... compile postcript document
     _gcfg_pushd || exit $?
-    a2ps --medium=A4 --portrait --columns=1 --borders=on --no-header --toc --left-title='$f' --right-title='$p./$p#' --left-footer='%m - %D{%d.%m.%Y}' --right-footer='%p./%p#' --chars-per-line=100 --file-align=sheet --encoding=ISO-8859-1 --output="${GCFG_FILE}" $(find . -not -path './.git/*' -type f | sed 's/^\.*//')
+    a2ps --medium=A4 --portrait --columns=1 --borders=on --no-header --toc --left-title='$f' --right-title='$p./$p#' --left-footer='%m - %D{%d.%m.%Y}' --right-footer='%p./%p#' --chars-per-line=100 --file-align=sheet --encoding=ISO-8859-1 --output="${GCFG_FILE}" $(find . -not -path './.git/*' -type f | xargs file | awk -F':' '{ if( $2 ~ /text/ ) print $1 }' | sed 's/^\.*//')
     chmod 600 "${GCFG_FILE}"
     [ $? -ne 0 ] && _gcfg_warning "${GCFG_ACTION}" 'Failed to change file access mode' "${GCFG_FILE}"
     _gcfg_popd || exit $?

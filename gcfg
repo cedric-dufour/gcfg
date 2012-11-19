@@ -76,7 +76,7 @@ case "${GCFG_ACTION}" in
     [ "${GCFG_FLAG:0:5}" == '@GIT:' ] && GCFG_FLAG="${GCFG_FLAG:0:7}"
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
-    git status --porcelain | sed 's/^\(..\) \(.*\)$/\/\2|@GIT:\1/;s/ /_/g'  | while read GIT_FILE; do
+    join -t'|' -a 1 <(find . -type f -not -path './.git/*' | sed 's/^\.//' | sort) <(git status --porcelain | sed 's/^\(..\) \(.*\)$/\/\2|@GIT:\1/;s/ /_/g' | sort -t'|') | sed 's/^\([^|]*\)$/\1|@GIT:__/' | while read GIT_FILE; do
       gitstat="${GIT_FILE#*|}"
       GCFG_FILE="${GIT_FILE%|*}"
       if [ "${GCFG_FLAG}" == '@FLAGS' ]; then

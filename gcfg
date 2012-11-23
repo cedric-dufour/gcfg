@@ -512,22 +512,41 @@ case "${GCFG_ACTION}" in
           if [ -e "${GCFG_FILE}" ]; then
             # ... actual file exists
             [ ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Not a regular file' "${GCFG_FILE}" && continue
-            _gcfg_confirm "${GCFG_ACTION}" 'Do you want to keep the [L]ocal or the [R]epository version ?'
-            if [ "$(_gcfg_answer 'l/r')" == 'l' ]; then
-              # ... move file back to configuration repository
-              cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-              [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && continue
-            else
-              _gcfg_confirm "${GCFG_ACTION}" 'Do you want to save/update the original backup file ?'
-              if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-                # ... backup original file
-                GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
-                [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
-                [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && continue
-                cp -p "${GCFG_FILE}" "${GCFG_FILE_ORIG}"
-                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && continue
-              fi
-            fi
+            _gcfg_confirm "${GCFG_ACTION}" 'Keep [L]ocal/[R]epository version, see [D]ifferences or [S]kip) ?'
+            next=0
+            while true; do
+              case "$(_gcfg_answer 'l/r/d/s')" in
+                'd')
+                  # ... show differences between files
+                  diff -uN "${GCFG_FILE}" "${GCFG_FILE_GIT}" | less
+                  continue
+                  ;;
+                'l')
+                  # ... move file back to configuration repository
+                  cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && next=1 && break
+                  break
+                  ;;
+                'r')
+                  _gcfg_confirm "${GCFG_ACTION}" 'Do you want to save/update the original backup file ?'
+                  if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+                    # ... backup original file
+                    GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
+                    [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
+                    [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && next=1 && break
+                    cp -p "${GCFG_FILE}" "${GCFG_FILE_ORIG}"
+                    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && next=1 && break
+                  fi
+                  break
+                  ;;
+                's')
+                  next=1
+                  break
+                  ;;
+              esac
+            done
+            [ ${next} -ne 0 ] && unset next && continue
+            unset next
             rm -f "${GCFG_FILE}"
             [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
           fi

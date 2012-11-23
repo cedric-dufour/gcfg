@@ -28,10 +28,6 @@ ACTIONS:
   edit <file>
     Edit the given file (after adding it to the configuration repository)
 
-  install [--batch] <file> <source>
-    Copy the given file from the given source (and add it to the configuration
-    repository)
-
   perm <file> [<mode> [<ownership>]]
     Show/change the permissions of the given file
 

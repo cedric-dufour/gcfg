@@ -13,18 +13,21 @@ _gcfg()
   if [ $COMP_CWORD -eq 1 ]; then
     COMPREPLY=( $( compgen -W 'list a2ps \
                                new copy edit perm rm \
-                               status add log diff commit push \
-                               orig delta \
+                               orig diff delta \
                                flag flagged unflag \
-                               verify pkglist' -- "$cur" ) )
+                               verify pkglist \
+                               git' -- "$cur" ) )
   elif [ $COMP_CWORD -eq 2 ]; then
     local prev=${COMP_WORDS[COMP_CWORD-1]}
     case "$prev" in
       @(list))
         COMPREPLY=( $( compgen -W '@FLAGS' -- "$cur" ) )
       ;;
-      @(a2ps|new|copy|edit|perm|rm|add|log|diff|orig|delta|flag|flagged|unflag))
+      @(a2ps|new|copy|edit|perm|rm|orig|diff|delta|flag|flagged|unflag))
         _filedir
+      ;;
+      @(git))
+        COMPREPLY=( $( compgen -W 'add checkout commit diff log push reset status' -- "$cur" ) )
       ;;
     esac
   elif [ $COMP_CWORD -eq 3 ]; then

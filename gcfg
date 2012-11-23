@@ -31,14 +31,11 @@ ACTIONS:
   perm <file> [<mode> [<ownership>]]
     Show/change the permissions of the given file
 
-  add <file> [<options> ...]
-  log|diff [<file>] [<options> ...]
-  status|commit|push [<options> ...]
-    Perform the corresponding GIT action on the given file 
-    (see 'git help ...' for available options)
-
   orig <file>
     Show the original version of the given file
+
+  diff <file>
+    Show the differences between the given file and its previous GIT version
 
   delta <file> [<comment-prefix>='#']
     Show the differences between the given file and its original version,
@@ -54,6 +51,10 @@ ACTIONS:
 
   pkglist
     Update and display the list of installed packages
+
+  git <git-command> [<git-parameter> ...]
+    Perform the corresponding command within the GIT repository
+    (see 'git help ...' for available commands/parameters)
 EOF
 
 
@@ -314,49 +315,6 @@ case "${GCFG_ACTION}" in
     ls -l "${GCFG_FILE_GIT}"
     ;;
 
-  'add')
-    # ... arguments
-    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
-    GCFG_FILE="${1}"; shift
-    # ... paths
-    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
-    # ... GIT command
-    _gcfg_pushd || exit $?
-    git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
-    _gcfg_popd || exit $?
-    ;;
-
-  'log'|'diff')
-    # ... arguments
-    GCFG_FILE=; [ $# -ge 1 ] && GCFG_FILE="${1}" && shift
-    # ... paths
-    if [ -n "${GCFG_FILE}" ]; then
-      GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
-    fi
-    # ... GIT command
-    _gcfg_pushd || exit $?
-    if [ -n "${GCFG_FILE}" ]; then
-      git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
-    else
-      git ${GCFG_ACTION} $*
-    fi
-    _gcfg_popd || exit $?
-    ;;
-
-  'commit')
-    # ... GIT command
-    _gcfg_pushd || exit $?
-    git commit --author "${GCFG_AUTHOR} <${GCFG_EMAIL}>" $*
-    _gcfg_popd || exit $?
-    ;;
-
-  'status'|'push')
-    # ... GIT command
-    _gcfg_pushd || exit $?
-    git ${GCFG_ACTION} $*
-    _gcfg_popd || exit $?
-    ;;
-
   'orig')
     # ... arguments
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
@@ -367,6 +325,21 @@ case "${GCFG_ACTION}" in
     [ ! -r "${GCFG_FILE_ORIG}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG}" && exit 1
     # ... show file
     cat "${GCFG_FILE_ORIG}"
+    ;;
+
+  'diff')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE="${1}"; shift
+    # ... paths
+    GCFG_FILE="$(_gcfg_path_canonical "${GCFG_FILE}")" || exit $?
+    [ ! -r "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE}" && exit 1
+    GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
+    [ ! -r "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_GIT}" && exit 1
+    # ... GIT command
+    _gcfg_pushd || exit $?
+    git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
+    _gcfg_popd || exit $?
     ;;
 
   'delta')
@@ -555,6 +528,22 @@ case "${GCFG_ACTION}" in
     aptitude search --disable-columns --display-format '%p' --sort 'name' '?and(?installed,?not(?automatic))' > "${GCFG_REPO_PKGLIST}"
     [ $? -ne 0 ] && _gcfg_error 'config' 'Failed to update installed packages list' "${GCFG_REPO_PKGLIST}" && exit 1
     cat "${GCFG_REPO_PKGLIST}"
+    ;;
+
+  'git')
+    # ... arguments
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <git-command> parameter' && exit 1
+    GCFG_GITCMD="${1}"; shift
+    # ... GIT parameters
+    case "${GCFG_GITCMD}" in
+      'commit')
+        GCFG_GITOPTS="--author '${GCFG_AUTHOR} <${GCFG_EMAIL}>'"
+        ;;
+    esac
+    # ... GIT command
+    _gcfg_pushd || exit $?
+    eval git ${GCFG_GITCMD} ${GCFG_GITOPTS} $*
+    _gcfg_popd || exit $?
     ;;
 
 esac

@@ -55,6 +55,9 @@ ACTIONS:
   verify
     Verify the consistency between the configuration repository and the actual
     files
+
+  pkglist
+    Update and display the list of installed packages
 EOF
 
 
@@ -345,17 +348,6 @@ case "${GCFG_ACTION}" in
     ;;
 
   'commit')
-    # ... packages listing
-    pkglist="$(aptitude search --disable-columns --display-format '%p' --sort 'name' '?and(?installed,?not(?automatic))')"
-    if [ -n "$(diff -q "${GCFG_REPO_PKGLIST}" <(echo "${pkglist}"))" ]; then
-      _gcfg_confirm "${GCFG_ACTION}" 'Do you want to update the package listing now ?'
-      answer="$(_gcfg_answer 'y/n')"
-      if [ "${answer}" == 'y' ]; then
-        echo "${pkglist}" > "${GCFG_REPO_PKGLIST}"
-        [ $? -ne 0 ] && _gcfg_error 'config' 'Failed to initialize packages listing' "${GCFG_REPO_PKGLIST}" && exit 1
-        gcfg add "${GCFG_REPO_PKGLIST}" || exit $?
-      fi
-    fi
     # ... GIT command
     _gcfg_pushd || exit $?
     git commit --author "${GCFG_AUTHOR} <${GCFG_EMAIL}>" $*
@@ -560,6 +552,13 @@ case "${GCFG_ACTION}" in
         fi
       fi
     done
+    ;;
+
+  'pkglist')
+    # ... update installed packages list
+    aptitude search --disable-columns --display-format '%p' --sort 'name' '?and(?installed,?not(?automatic))' > "${GCFG_REPO_PKGLIST}"
+    [ $? -ne 0 ] && _gcfg_error 'config' 'Failed to update installed packages list' "${GCFG_REPO_PKGLIST}" && exit 1
+    cat "${GCFG_REPO_PKGLIST}"
     ;;
 
 esac

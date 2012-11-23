@@ -16,7 +16,7 @@ _gcfg()
                                status add log diff commit push \
                                orig delta \
                                flag flagged unflag \
-                               verify' -- "$cur" ) )
+                               verify pkglist' -- "$cur" ) )
   elif [ $COMP_CWORD -eq 2 ]; then
     local prev=${COMP_WORDS[COMP_CWORD-1]}
     case "$prev" in

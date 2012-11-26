@@ -17,13 +17,15 @@ ACTIONS:
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
 
-  new [--batch] <file> [<original-file>]
+  new [--batch] [--hard|--copy] <file> [<original-file>]
     Add the given file to/from the configuration repository
+    (using hardlink or copy operation instead of symlink)
 
-  copy [--batch] [--force] <file> <source>
+  copy [--batch] [--hard|--copy] [--force] <file> <source>
   rm [--batch] [--force] <file>
     Copy/remove the given file from the given source, provided it has not been
     edited (unless '--force' is specified)
+    (using hardlink or copy operation instead of symlink)
 
   edit <file>
     Edit the given file (after adding it to the configuration repository)
@@ -117,7 +119,12 @@ case "${GCFG_ACTION}" in
 
   'new')
     # ... arguments
-    GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+    GCFG_BATCH=; GCFG_HARD=; GCFG_COPY=
+    while [ "${1:0:2}" == '--' ]; do
+      [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+      [ "${1}" == '--hard' ] && GCFG_HARD='y' && shift
+      [ "${1}" == '--copy' ] && GCFG_COPY='y' && shift
+    done
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
     GCFG_FILE_ORIG_SRC=; [ $# -ge 1 ] && GCFG_FILE_ORIG_SRC="${1}" && shift
@@ -139,7 +146,7 @@ case "${GCFG_ACTION}" in
       [ ! -r "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Unreadable file' "${GCFG_FILE}" && exit 1
       # ... backup original file
       if [ -z "${GCFG_FILE_ORIG_SRC}" -a -z "${GCFG_BATCH}" ]; then
-        _gcfg_confirm "${GCFG_ACTION}" 'Do you want to keep a backup of the original file ?'
+        _gcfg_confirm "${GCFG_ACTION}" 'Keep a backup of the original file ?'
         answer="$(_gcfg_answer 'y/n')"
         [ "${answer}" == 'y' ] && GCFG_FILE_ORIG_SRC="${GCFG_FILE}"
       fi
@@ -158,12 +165,21 @@ case "${GCFG_ACTION}" in
       cp -p "${GCFG_FILE_ORIG_SRC}" "${GCFG_FILE_ORIG}"
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_ORIG_SRC} -> ${GCFG_FILE_ORIG}" && exit 1
     fi
-    # ... hard-link actual file and file in configuration repository
-    ln "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-    if [ $? -ne 0 ]; then
-      _gcfg_warning "${GCFG_ACTION}" "File cannot be hard-linked; copying instead (use '${0##*/} verify ...' to keep in sync.)" "${GCFG_FILE}"
-      cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    # ... move file to configuration repository
+    mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    if [ -n "${GCFG_COPY}" ]; then
+      # ... copy back
+      cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && exit 1
+    elif [ -n "${GCFG_HARD}" ]; then
+      # ... hardlink back
+      ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    else
+      # ... symlink back
+      ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
     fi
     # ... add file to GIT
     late_exit=0
@@ -177,8 +193,11 @@ case "${GCFG_ACTION}" in
 
   'rm')
     # ... arguments
-    GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
-    GCFG_FORCE=; [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+    GCFG_BATCH=; GCFG_FORCE=
+    while [ "${1:0:2}" == '--' ]; do
+      [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+      [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+    done
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
     # ... paths
@@ -231,8 +250,13 @@ case "${GCFG_ACTION}" in
 
   'copy')
     # ... arguments
-    GCFG_BATCH=; [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
-    GCFG_FORCE=; [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+    GCFG_BATCH=; GCFG_HARD=; GCFG_COPY=; GCFG_FORCE=
+    while [ "${1:0:2}" == '--' ]; do
+      [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
+      [ "${1}" == '--hard' ] && GCFG_HARD='y' && shift
+      [ "${1}" == '--copy' ] && GCFG_COPY='y' && shift
+      [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+    done
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <source> parameter' && exit 1
@@ -245,9 +269,9 @@ case "${GCFG_ACTION}" in
     # ... install
     if [ -e "${GCFG_FILE}" ]; then
       if [ -n "${GCFG_BATCH}" ]; then
-        gcfg new --batch "${GCFG_FILE}" "${GCFG_FILE}" || exit $?
+        gcfg new --batch ${GCFG_HARD:+--hard} ${GCFG_COPY:+--copy} "${GCFG_FILE}" "${GCFG_FILE}" || exit $?
       else
-        gcfg new "${GCFG_FILE}" || exit $?
+        gcfg new ${GCFG_HARD:+--hard} ${GCFG_COPY:+--copy} "${GCFG_FILE}" || exit $?
       fi
       if gcfg flagged "${GCFG_FILE}" '@EDITED'; then
         if [ -z "${GCFG_FORCE}" ]; then
@@ -426,100 +450,156 @@ case "${GCFG_ACTION}" in
       GCFG_FILE_ORIG="$(_gcfg_path_original "${GCFG_FILE}")" || exit $?
       GCFG_FILE_FLAG="$(_gcfg_path_flag "${GCFG_FILE}")" || exit $?
       # ... check actual file
-      if [ -h "${GCFG_FILE}" -a -n "$(ls -l "${GCFG_FILE}" | grep "\-> ${GCFG_FILE_GIT}$")" ]; then
-        # ... file is a symlink
-        rm -f "${GCFG_FILE}"
-        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
-        # ... re-synch
-        ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-        if [ $? -ne 0 ]; then
-          _gcfg_warning "${GCFG_ACTION}" "File cannot be hard-linked; copying instead (use '${0##*/} verify ...' to keep in sync.)" "${GCFG_FILE}"
-          cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-          [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && continue
+      repair=0
+      if [ -e "${GCFG_FILE}" ]; then
+        # ... file exists
+        exists=1
+        if [ -h "${GCFG_FILE}" ]; then
+          if [ -z "$(ls -l "${GCFG_FILE}" | grep "\-> ${GCFG_FILE_GIT}$")" ]; then
+            # ... invalid symlink
+            repair=1
+          fi
+        else
+          # ... not a symlink
+          if [ "$(stat --printf='%h' "${GCFG_FILE}")" != '1' ]; then
+            # ... hardlink
+            # NOTE: we accept hardlinks to the configuration repository, for some programs choke on symlinks
+            if [ "$(stat --printf='%i' "${GCFG_FILE}")" != "$(stat --printf='%i' "${GCFG_FILE_GIT}")" ]; then
+              # ... different inodes
+              repair=1
+            fi
+          else
+            # ... regular file
+            # NOTE: we accept regular files that don't differ from configuration repository, for some programs choke on symlinks AND hardlinks
+            if [ -n "$(diff -q "${GCFG_FILE}" "${GCFG_FILE_GIT}")" ]; then
+              repair=1
+            fi
+          fi
         fi
+      else
+        # ... file does not exist
+        exists=0
+        repair=1
       fi
-      if [ ! -e "${GCFG_FILE}" -o -n "$(diff -q "${GCFG_FILE}" "${GCFG_FILE_GIT}")" ]; then
-        # ... file differs
-        _gcfg_warning "${GCFG_ACTION}" 'Actual file is missing or different from the one in the configuration repository' "$(ls -l "${GCFG_FILE}" 2>&1)"
-        _gcfg_confirm "${GCFG_ACTION}" 'Do you want to re-synchronize with the configuration repository ?'
-        if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-          if [ ! -e "${GCFG_FILE}" ]; then
-            # ... purge ?
-            _gcfg_confirm "${GCFG_ACTION}" 'Do you want to remove the corresponding file from the configuration repository ?'
-            if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+      if [ ${repair} -ne 0 ]; then
+        if [ ${exists} -ne 0 ]; then
+          _gcfg_warning "${GCFG_ACTION}" "Actual file is different from configuration repository's version" "$(stat --printf='[%i] %N (%F; %h)\n' "${GCFG_FILE}")"
+          _gcfg_confirm "${GCFG_ACTION}" 'Show [D]ifferences, use [A]ctual/[R]epository version, [P]urge or [S]kip ?'
+        else
+          _gcfg_warning "${GCFG_ACTION}" 'Actual file is missing' "${GCFG_FILE}"
+          _gcfg_confirm "${GCFG_ACTION}" 'Use [R]epository version, [P]urge or [S]kip ?'
+        fi
+        while true; do
+          if [ ${exists} -ne 0 ]; then
+            answer="$(_gcfg_answer 'd/a/r/p/s')"
+          else
+            answer="$(_gcfg_answer 'r/p/s')"
+          fi
+          case "${answer}" in
+            'd')
+              # ... show differences between files
+              diff -uN "${GCFG_FILE_GIT}" "${GCFG_FILE}" | less
+              continue
+              ;;
+            'a')
+              _gcfg_confirm "${GCFG_ACTION}" 'Use [S]ymlink, [H]ardlink or [C]opy ?'
+              case "$(_gcfg_answer 's/h/c')" in
+                's')
+                  # ... replace configuration repository's file with actual version and symlink it back
+                  rm -f "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && break
+                  mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ;;
+                'h')
+                  # ... replace configuration repository's file with actual version and hardlink it back
+                  rm -f "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && break
+                  mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ;;
+                'c')
+                  # ... replace configuration repository's file content with actual version's
+                  cat "${GCFG_FILE}" > "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to update file content' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ;;
+              esac
+              break
+              ;;
+            'r')
+              if [ ${exists} -ne 0 ]; then
+                # ... backup original file
+                _gcfg_confirm "${GCFG_ACTION}" 'Save/update the original backup file ?'
+                if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
+                  GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
+                  [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
+                  [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && break
+                  cp -p "${GCFG_FILE}" "${GCFG_FILE_ORIG}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && break
+                fi
+                # ... remove actual file
+                rm -f "${GCFG_FILE}"
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && break
+              fi
+              _gcfg_confirm "${GCFG_ACTION}" 'Use [S]ymlink, [H]ardlink or [C]opy ?'
+              case "$(_gcfg_answer 's/h/c')" in
+                's')
+                  # ... create symlink to the configuration repository's file
+                  ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  break
+                  ;;
+                'h')
+                  # ... create hardlink to the configuration repository's file
+                  ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  break
+                  ;;
+                'c')
+                  # ... copy configuration repository's file back
+                  cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && break
+                  break
+                  ;;
+              esac
+              ;;
+            'p')
               # ... remove file from GIT
               late_exit=0
               _gcfg_pushd || exit $?
               git rm --force "${GCFG_FILE##/}"
               [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}"
               _gcfg_popd || exit $?
-              [ ${late_exit} -ne 0 ] && continue
+              [ ${late_exit} -ne 0 ] && unset late_exit && break
+              unset late_exit
               # ... remove file flags
               for flag in "${GCFG_FILE_FLAG}"\{*\}; do
                 rm -f "${flag}"
-                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && continue
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && break
               done
               # ... remove original backup file
               if [ -e "${GCFG_FILE_ORIG}" ]; then
                 rm -f "${GCFG_FILE_ORIG}"
-                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_ORIG}" && continue
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_ORIG}" && break
               fi
               # ... cleanup directories
               _gcfg_rmdir "$(dirname "${GCFG_FILE}")"
               # ... done
-              continue
-            fi
-          fi
-          if [ -e "${GCFG_FILE}" ]; then
-            # ... actual file exists
-            [ ! -f "${GCFG_FILE}" ] && _gcfg_error "${GCFG_ACTION}" 'Not a regular file' "${GCFG_FILE}" && continue
-            _gcfg_confirm "${GCFG_ACTION}" 'Keep [L]ocal/[R]epository version, see [D]ifferences or [S]kip) ?'
-            next=0
-            while true; do
-              case "$(_gcfg_answer 'l/r/d/s')" in
-                'd')
-                  # ... show differences between files
-                  diff -uN "${GCFG_FILE}" "${GCFG_FILE_GIT}" | less
-                  continue
-                  ;;
-                'l')
-                  # ... move file back to configuration repository
-                  cp -p "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && next=1 && break
-                  break
-                  ;;
-                'r')
-                  _gcfg_confirm "${GCFG_ACTION}" 'Do you want to save/update the original backup file ?'
-                  if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
-                    # ... backup original file
-                    GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
-                    [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
-                    [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && next=1 && break
-                    cp -p "${GCFG_FILE}" "${GCFG_FILE_ORIG}"
-                    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && next=1 && break
-                  fi
-                  break
-                  ;;
-                's')
-                  next=1
-                  break
-                  ;;
-              esac
-            done
-            [ ${next} -ne 0 ] && unset next && continue
-            unset next
-            rm -f "${GCFG_FILE}"
-            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && continue
-          fi
-          # ... re-synch
-          ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-          if [ $? -ne 0 ]; then
-            _gcfg_warning "${GCFG_ACTION}" "File cannot be hard-linked; copying instead (use '${0##*/} verify ...' to keep in sync.)" "${GCFG_FILE}"
-            cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-            [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && continue
-          fi
-        fi
+              break
+              ;;
+            's')
+              break
+              ;;
+          esac
+        done
+        unset answer
+        unset exists
       fi
+      unset repair
     done
     ;;
 

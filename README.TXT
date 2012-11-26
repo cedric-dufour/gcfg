@@ -52,9 +52,6 @@ to GIT.
 
 USAGE: gcfg <action> [<parameter> ...]
 
-SYNOPSIS:
-  Perform the requested action in the configuration repository.
-
 ACTIONS:
   list [<flag>|@FLAGS]
     List the content of the configuration repository (matching the given
@@ -63,13 +60,15 @@ ACTIONS:
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
 
-  new [--batch] <file> [<original-file>]
+  new [--batch] [--hard|--copy] <file> [<original-file>]
     Add the given file to/from the configuration repository
+    (using hardlink or copy operation instead of symlink)
 
-  copy [--batch] [--force] <file> <source>
+  copy [--batch] [--hard|--copy] [--force] <file> <source>
   rm [--batch] [--force] <file>
     Copy/remove the given file from the given source, provided it has not been
     edited (unless '--force' is specified)
+    (using hardlink or copy operation instead of symlink)
 
   edit <file>
     Edit the given file (after adding it to the configuration repository)
@@ -77,14 +76,11 @@ ACTIONS:
   perm <file> [<mode> [<ownership>]]
     Show/change the permissions of the given file
 
-  add <file> [<options> ...]
-  log|diff [<file>] [<options> ...]
-  status|commit|push [<options> ...]
-    Perform the corresponding GIT action on the given file 
-    (see 'git help ...' for available options)
-
   orig <file>
     Show the original version of the given file
+
+  diff <file>
+    Show the differences between the given file and its previous GIT version
 
   delta <file> [<comment-prefix>='#']
     Show the differences between the given file and its original version,
@@ -97,3 +93,11 @@ ACTIONS:
   verify
     Verify the consistency between the configuration repository and the actual
     files
+
+  pkglist
+    Update and display the list of installed packages
+
+  git <git-command> [<git-parameter> ...]
+    Perform the corresponding command within the GIT repository
+    (see 'git help ...' for available commands/parameters)
+

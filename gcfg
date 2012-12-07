@@ -17,15 +17,15 @@ ACTIONS:
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
 
-  new [--batch] [--hard|--copy] <file> [<original-file>]
+  new [--batch] [--symbolic|--copy] <file> [<original-file>]
     Add the given file to/from the configuration repository
-    (using hardlink or copy operation instead of symlink)
+    (using symlink or copy operation instead of hardlink)
 
-  copy [--batch] [--hard|--copy] [--force] <file> <source>
+  copy [--batch] [--symbolic|--copy] [--force] <file> <source>
   rm [--batch] [--force] <file>
     Copy/remove the given file from the given source, provided it has not been
     edited (unless '--force' is specified)
-    (using hardlink or copy operation instead of symlink)
+    (using symlink or copy operation instead of hardlink)
 
   edit <file>
     Edit the given file (after adding it to the configuration repository)
@@ -52,7 +52,7 @@ ACTIONS:
     files
 
   pkglist
-    Update and display the list of installed packages
+    Update the list of installed packages
 
   git <git-command> [<git-parameter> ...]
     Perform the corresponding command within the GIT repository
@@ -78,7 +78,7 @@ case "${GCFG_ACTION}" in
     [ "${GCFG_FLAG:0:5}" == '@GIT:' ] && GCFG_FLAG="${GCFG_FLAG:0:7}"
     # ... list content of GIT repository
     _gcfg_pushd || exit $?
-    join -t'|' -a 1 <(find . -type f -not -path './.git/*' | sed 's/^\.//' | sort) <(git status --porcelain | sed 's/^\(..\) \(.*\)$/\/\2|@GIT:\1/;s/ /_/g' | sort -t'|') | sed 's/^\([^|]*\)$/\1|@GIT:__/' | while read GIT_FILE; do
+    join -t'|' -a 1 <(find . -type f -not -path './.git/*' | sed 's/^\.//' | sort) <(git status --porcelain | sed 's/^\(..\) \(.*\)$/\/\2|@GIT:\1/;s/ /_/g' | sort -t'|' -k1,1) | sed 's/^\([^|]*\)$/\1|@GIT:__/' | while read GIT_FILE; do
       gitstat="${GIT_FILE#*|}"
       GCFG_FILE="${GIT_FILE%|*}"
       if [ "${GCFG_FLAG}" == '@FLAGS' ]; then
@@ -119,11 +119,16 @@ case "${GCFG_ACTION}" in
 
   'new')
     # ... arguments
-    GCFG_BATCH=; GCFG_HARD=; GCFG_COPY=
+    GCFG_BATCH=; GCFG_LINK='hard'
     while [ "${1:0:2}" == '--' ]; do
-      [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
-      [ "${1}" == '--hard' ] && GCFG_HARD='y' && shift
-      [ "${1}" == '--copy' ] && GCFG_COPY='y' && shift
+      case "${1}" in
+        '--batch') GCFG_BATCH='y';;
+        '--hard') GCFG_LINK='hard';;
+        '--symbolic') GCFG_LINK='symbolic';;
+        '--copy') GCFG_LINK='copy';;
+        *) _gcfg_warning "${GCFG_ACTION}" 'Unrecognized option' "${1}";;
+      esac
+      shift
     done
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
@@ -168,18 +173,22 @@ case "${GCFG_ACTION}" in
     # ... move file to configuration repository
     mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
     [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
-    if [ -n "${GCFG_COPY}" ]; then
+    if [ "${GCFG_LINK}" == 'copy' ]; then
       # ... copy back
       cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && exit 1
-    elif [ -n "${GCFG_HARD}" ]; then
-      # ... hardlink back
-      ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
-    else
+    elif [ "${GCFG_LINK}" == 'symbolic' ]; then
       # ... symlink back
       ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
       [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+    else
+      # ... hardlink back
+      ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+      if [ $? -ne 0 ]; then
+        _gcfg_warning "${GCFG_ACTION}" 'Failed to hardlink file; Copying instead' "${GCFG_FILE} -> ${GCFG_FILE_GIT}"
+        cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && exit 1
+      fi
     fi
     # ... add file to GIT
     late_exit=0
@@ -195,8 +204,12 @@ case "${GCFG_ACTION}" in
     # ... arguments
     GCFG_BATCH=; GCFG_FORCE=
     while [ "${1:0:2}" == '--' ]; do
-      [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
-      [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+      case "${1}" in
+        '--batch') GCFG_BATCH='y';;
+        '--force') GCFG_FORCE='y';;
+        *) _gcfg_warning "${GCFG_ACTION}" 'Unrecognized option' "${1}";;
+      esac
+      shift
     done
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
@@ -250,12 +263,17 @@ case "${GCFG_ACTION}" in
 
   'copy')
     # ... arguments
-    GCFG_BATCH=; GCFG_HARD=; GCFG_COPY=; GCFG_FORCE=
+    GCFG_BATCH=; GCFG_LINK='hard'; GCFG_FORCE=
     while [ "${1:0:2}" == '--' ]; do
-      [ "${1}" == '--batch' ] && GCFG_BATCH='y' && shift
-      [ "${1}" == '--hard' ] && GCFG_HARD='y' && shift
-      [ "${1}" == '--copy' ] && GCFG_COPY='y' && shift
-      [ "${1}" == '--force' ] && GCFG_FORCE='y' && shift
+      case "${1}" in
+        '--batch') GCFG_BATCH='y';;
+        '--hard') GCFG_LINK='hard';;
+        '--symbolic') GCFG_LINK='symbolic';;
+        '--copy') GCFG_LINK='copy';;
+        '--force') GCFG_FORCE='y';;
+        *) _gcfg_warning "${GCFG_ACTION}" 'Unrecognized option' "${1}";;
+      esac
+      shift
     done
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
     GCFG_FILE="${1}"; shift
@@ -269,9 +287,9 @@ case "${GCFG_ACTION}" in
     # ... install
     if [ -e "${GCFG_FILE}" ]; then
       if [ -n "${GCFG_BATCH}" ]; then
-        gcfg new --batch ${GCFG_HARD:+--hard} ${GCFG_COPY:+--copy} "${GCFG_FILE}" "${GCFG_FILE}" || exit $?
+        gcfg new --batch --${GCFG_LINK} "${GCFG_FILE}" "${GCFG_FILE}" || exit $?
       else
-        gcfg new ${GCFG_HARD:+--hard} ${GCFG_COPY:+--copy} "${GCFG_FILE}" || exit $?
+        gcfg new --${GCFG_LINK} "${GCFG_FILE}" || exit $?
       fi
       if gcfg flagged "${GCFG_FILE}" '@EDITED'; then
         if [ -z "${GCFG_FORCE}" ]; then
@@ -502,17 +520,8 @@ case "${GCFG_ACTION}" in
               continue
               ;;
             'a')
-              _gcfg_confirm "${GCFG_ACTION}" 'Use [S]ymlink, [H]ardlink or [C]opy ?'
-              case "$(_gcfg_answer 's/h/c')" in
-                's')
-                  # ... replace configuration repository's file with actual version and symlink it back
-                  rm -f "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && break
-                  mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
-                  ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
-                  ;;
+              _gcfg_confirm "${GCFG_ACTION}" 'Use [H]ardlink, [S]ymlink or [C]opy ?'
+              case "$(_gcfg_answer 'h/s/c' 'h')" in
                 'h')
                   # ... replace configuration repository's file with actual version and hardlink it back
                   rm -f "${GCFG_FILE_GIT}"
@@ -521,6 +530,15 @@ case "${GCFG_ACTION}" in
                   [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
                   ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
                   [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ;;
+                's')
+                  # ... replace configuration repository's file with actual version and symlink it back
+                  rm -f "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && break
+                  mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
                   ;;
                 'c')
                   # ... replace configuration repository's file content with actual version's
@@ -545,18 +563,18 @@ case "${GCFG_ACTION}" in
                 rm -f "${GCFG_FILE}"
                 [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && break
               fi
-              _gcfg_confirm "${GCFG_ACTION}" 'Use [S]ymlink, [H]ardlink or [C]opy ?'
-              case "$(_gcfg_answer 's/h/c')" in
-                's')
-                  # ... create symlink to the configuration repository's file
-                  ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
-                  break
-                  ;;
+              _gcfg_confirm "${GCFG_ACTION}" 'Use [H]ardlink, [S]ymlink or [C]opy ?'
+              case "$(_gcfg_answer 'h/s/c' 'h')" in
                 'h')
                   # ... create hardlink to the configuration repository's file
                   ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
                   [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  break
+                  ;;
+                's')
+                  # ... create symlink to the configuration repository's file
+                  ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
                   break
                   ;;
                 'c')
@@ -606,11 +624,13 @@ case "${GCFG_ACTION}" in
   'pkglist')
     # ... update installed packages list
     aptitude search --disable-columns --display-format '%p' --sort 'name' '?and(?installed,?not(?automatic))' > "${GCFG_REPO_PKGLIST}"
-    [ $? -ne 0 ] && _gcfg_error 'config' 'Failed to update installed packages list' "${GCFG_REPO_PKGLIST}" && exit 1
-    cat "${GCFG_REPO_PKGLIST}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to update installed packages list' "${GCFG_REPO_PKGLIST}" && exit 1
+    _gcfg_info "${GCFG_ACTION}" 'Installed packages list successfully udpate' "cat '${GCFG_REPO_PKGLIST}' OR gcfg diff '${GCFG_REPO_PKGLIST}'"
     ;;
 
   'git')
+    # ... verify
+    gcfg verify
     # ... arguments
     [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <git-command> parameter' && exit 1
     GCFG_GITCMD="${1}"; shift

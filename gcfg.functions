@@ -46,9 +46,11 @@ function _gcfg_confirm {
 
 function _gcfg_answer {
   answers="${1}"
+  default="${2}"
   while true; do
-    echo ": (${answers}) ? " >&2
+    echo ": (${answers}) [${default:--}] ? " >&2
     read answer
+    [ -z "${answer}" -a -n "${default}" ] && answer="${default}" && break
     [ "${answer}" == '/' ] && continue
     [ "${answers/${answer}/}" != "${answers}" ] && break
   done

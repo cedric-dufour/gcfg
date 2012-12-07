@@ -52,6 +52,9 @@ to GIT.
 
 USAGE: gcfg <action> [<parameter> ...]
 
+SYNOPSIS:
+  Perform the requested action in the configuration repository.
+
 ACTIONS:
   list [<flag>|@FLAGS]
     List the content of the configuration repository (matching the given
@@ -60,15 +63,15 @@ ACTIONS:
   a2ps <output-file>
     Create a Postscript document with all files in the configuration repository
 
-  new [--batch] [--hard|--copy] <file> [<original-file>]
+  new [--batch] [--symbolic|--copy] <file> [<original-file>]
     Add the given file to/from the configuration repository
-    (using hardlink or copy operation instead of symlink)
+    (using symlink or copy operation instead of hardlink)
 
-  copy [--batch] [--hard|--copy] [--force] <file> <source>
+  copy [--batch] [--symbolic|--copy] [--force] <file> <source>
   rm [--batch] [--force] <file>
     Copy/remove the given file from the given source, provided it has not been
     edited (unless '--force' is specified)
-    (using hardlink or copy operation instead of symlink)
+    (using symlink or copy operation instead of hardlink)
 
   edit <file>
     Edit the given file (after adding it to the configuration repository)
@@ -95,9 +98,8 @@ ACTIONS:
     files
 
   pkglist
-    Update and display the list of installed packages
+    Update the list of installed packages
 
   git <git-command> [<git-parameter> ...]
     Perform the corresponding command within the GIT repository
     (see 'git help ...' for available commands/parameters)
-

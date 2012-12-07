@@ -21,7 +21,7 @@ _gcfg()
     local prev=${COMP_WORDS[COMP_CWORD-1]}
     case "$prev" in
       @(list))
-        COMPREPLY=( $( compgen -W '@FLAGS' -- "$cur" ) )
+        COMPREPLY=( $( compgen -W '@EDITED @FLAGS' -- "$cur" ) )
       ;;
       @(a2ps|new|copy|edit|perm|rm|orig|diff|delta|flag|flagged|unflag))
         _filedir

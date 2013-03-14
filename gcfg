@@ -185,9 +185,9 @@ case "${GCFG_ACTION}" in
       # ... hardlink back
       ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
       if [ $? -ne 0 ]; then
-        _gcfg_warning "${GCFG_ACTION}" 'Failed to hardlink file; Copying instead' "${GCFG_FILE} -> ${GCFG_FILE_GIT}"
-        cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && exit 1
+        _gcfg_warning "${GCFG_ACTION}" 'Failed to hardlink file; symlinking instead' "${GCFG_FILE} -> ${GCFG_FILE_GIT}"
+        ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
       fi
     fi
     # ... add file to GIT
@@ -525,25 +525,29 @@ case "${GCFG_ACTION}" in
                 'h')
                   # ... replace configuration repository's file with actual version and hardlink it back
                   rm -f "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && exit 1
                   mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
                   ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  if [ $? -ne 0 ]; then
+                    _gcfg_warning "${GCFG_ACTION}" 'Failed to hardlink file; symlinking instead' "${GCFG_FILE} -> ${GCFG_FILE_GIT}"
+                    ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+                  fi
                   ;;
                 's')
                   # ... replace configuration repository's file with actual version and symlink it back
                   rm -f "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}" && exit 1
                   mv "${GCFG_FILE}" "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to move file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
                   ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
                   ;;
                 'c')
                   # ... replace configuration repository's file content with actual version's
                   cat "${GCFG_FILE}" > "${GCFG_FILE_GIT}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to update file content' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to update file content' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
                   ;;
               esac
               break
@@ -555,35 +559,37 @@ case "${GCFG_ACTION}" in
                 if [ "$(_gcfg_answer 'y/n')" == 'y' ]; then
                   GCFG_FILE_ORIG_DIR="$(dirname "${GCFG_FILE_ORIG}")"
                   [ ! -e "${GCFG_FILE_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_ORIG_DIR}"
-                  [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && break
+                  [ ! -d "${GCFG_FILE_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_ORIG_DIR}" && exit 1
                   cp -p "${GCFG_FILE}" "${GCFG_FILE_ORIG}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE} -> ${GCFG_FILE_ORIG}" && exit 1
                 fi
                 # ... remove actual file
                 rm -f "${GCFG_FILE}"
-                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && break
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && exit 1
               fi
               _gcfg_confirm "${GCFG_ACTION}" 'Use [H]ardlink, [S]ymlink or [C]opy ?'
               case "$(_gcfg_answer 'h/s/c' 'h')" in
                 'h')
                   # ... create hardlink to the configuration repository's file
                   ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to hardlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
-                  break
+                  if [ $? -ne 0 ]; then
+                    _gcfg_warning "${GCFG_ACTION}" 'Failed to hardlink file; symlinking instead' "${GCFG_FILE} -> ${GCFG_FILE_GIT}"
+                    ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
+                    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
+                  fi
                   ;;
                 's')
                   # ... create symlink to the configuration repository's file
                   ln -s "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && break
-                  break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE} -> ${GCFG_FILE_GIT}" && exit 1
                   ;;
                 'c')
                   # ... copy configuration repository's file back
                   cp -p "${GCFG_FILE_GIT}" "${GCFG_FILE}"
-                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && break
-                  break
+                  [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_GIT} -> ${GCFG_FILE}" && exit 1
                   ;;
               esac
+              break
               ;;
             'p')
               # ... remove file from GIT
@@ -597,12 +603,12 @@ case "${GCFG_ACTION}" in
               # ... remove file flags
               for flag in "${GCFG_FILE_FLAG}"\{*\}; do
                 rm -f "${flag}"
-                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && break
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && exit 1
               done
               # ... remove original backup file
               if [ -e "${GCFG_FILE_ORIG}" ]; then
                 rm -f "${GCFG_FILE_ORIG}"
-                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_ORIG}" && break
+                [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_ORIG}" && exit 1
               fi
               # ... cleanup directories
               _gcfg_rmdir "$(dirname "${GCFG_FILE}")"

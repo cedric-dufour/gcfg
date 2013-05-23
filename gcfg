@@ -3,7 +3,7 @@
 
 
 ## Check invocation
-if [ "${0#-}" == 'bash' ]; then
+if [ "${BASH_LINENO[0]}" != '0' ]; then
   source gcfg.config "$@"
   return $?
 fi

@@ -146,6 +146,9 @@ case "${GCFG_ACTION}" in
     if [ -n "${GCFG_FILE_ORIG_SRC}" ]; then
       [ ! -r "${GCFG_FILE_ORIG_SRC}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_ORIG_SRC}" && exit 1
     fi
+    case "${GCFG_FILE}" in
+      /etc/cron.*) GCFG_LINK='symbolic';;
+    esac
     GCFG_FILE_GIT="$(_gcfg_path_git "${GCFG_FILE}")" || exit $?
     [ -e "${GCFG_FILE_GIT}" ] && exit 0
     GCFG_FILE_DIR="$(dirname "${GCFG_FILE}")"
@@ -387,7 +390,7 @@ case "${GCFG_ACTION}" in
     [ ! -r "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/unreadable file' "${GCFG_FILE_GIT}" && exit 1
     # ... GIT command
     _gcfg_pushd || exit $?
-    git ${GCFG_ACTION} $* -- ${GCFG_FILE##/}
+    git ${GCFG_ACTION} "$@" -- ${GCFG_FILE##/}
     _gcfg_popd || exit $?
     ;;
 
@@ -575,7 +578,11 @@ case "${GCFG_ACTION}" in
                 [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE}" && exit 1
               fi
               _gcfg_confirm "${GCFG_ACTION}" 'Use [H]ardlink, [S]ymlink or [C]opy ?'
-              case "$(_gcfg_answer 'h/s/c' 'h')" in
+              case "${GCFG_FILE}" in
+                /etc/cron.*) GCFG_ACTION_DEFAULT='s';;
+                *) GCFG_ACTION_DEFAULT='h';;
+              esac
+              case "$(_gcfg_answer 'h/s/c' "${GCFG_ACTION_DEFAULT}")" in
                 'h')
                   # ... create hardlink to the configuration repository's file
                   ln "${GCFG_FILE_GIT}" "${GCFG_FILE}"
@@ -655,7 +662,7 @@ case "${GCFG_ACTION}" in
     esac
     # ... GIT command
     _gcfg_pushd || exit $?
-    eval git ${GCFG_GITCMD} ${GCFG_GITOPTS} $*
+    eval git ${GCFG_GITCMD} ${GCFG_GITOPTS} "$@"
     _gcfg_popd || exit $?
     ;;
 

@@ -1,3 +1,9 @@
+gcfg (0.9.20141202a) UNRELEASED; urgency=low
+
+  * New version (see https://github.com/cedric-dufour/gcfg for changelog)
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Tue, 02 Dec 2014 12:12:27 +0100
+
 gcfg (0.9.20130523b) UNRELEASED; urgency=low
 
   * New version (see https://github.com/cedric-dufour/gcfg for changelog)

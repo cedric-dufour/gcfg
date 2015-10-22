@@ -28,6 +28,10 @@ ACTIONS:
     Add the given file to/from the configuration repository
     (using symlink or copy operation instead of hardlink)
 
+  mv <file> <destination>
+    Move the given file from source to destination
+    (including flags and original version)
+
   copy [--batch] [--symbolic|--copy] [--force] <file> <source>
   rm [--batch] [--force] <file>
     Copy/remove the given file from the given source, provided it has not been
@@ -201,13 +205,124 @@ case "${GCFG_ACTION}" in
       fi
     fi
     # ... add file to GIT
-    late_exit=0
     _gcfg_pushd || exit $?
     git add "${GCFG_FILE##/}"
-    [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to add file to GIT' "${GCFG_FILE_GIT}"
+    late_exit=$?
+    [ ${late_exit} -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to add file to GIT' "${GCFG_FILE_GIT}"
     _gcfg_popd || exit $?
     [ ${late_exit} -ne 0 ] && exit ${late_exit}
     _gcfg_info "${GCFG_ACTION}" 'File successfully added to configuration repository' "${GCFG_FILE}"
+    ;;
+
+  'mv')
+    # ... verify
+    gcfg verify
+    # ... arguments
+    GCFG_BATCH=
+    while [ "${1:0:2}" == '--' ]; do
+      case "${1}" in
+        '--batch') GCFG_BATCH='y';;
+        *) _gcfg_warning "${GCFG_ACTION}" 'Unrecognized option' "${1}";;
+      esac
+      shift
+    done
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <file> parameter' && exit 1
+    GCFG_FILE_SRC="${1}"; shift
+    [ $# -le 0 ] && _gcfg_error "${GCFG_ACTION}" 'Missing <destination> parameter' && exit 1
+    GCFG_FILE_DST="${1}"; shift
+    # ... paths
+    GCFG_FILE_SRC="$(_gcfg_path_canonical "${GCFG_FILE_SRC}")" || exit $?
+    GCFG_FILE_DST="$(_gcfg_path_canonical "${GCFG_FILE_DST}")" || exit $?
+    # ... checks
+    [ ! -e "${GCFG_FILE_SRC}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existant file' "${GCFG_FILE_SRC}" && exit 1
+    [ ! -h "${GCFG_FILE_SRC}" -a ! -f "${GCFG_FILE_SRC}" ] && _gcfg_error "${GCFG_ACTION}" 'Invalid file type' "${GCFG_FILE_SRC}" && exit 1
+    # ... confirmation
+    if [ -z "${GCFG_BATCH}" ]; then
+      _gcfg_confirm "${GCFG_ACTION}" 'Are you sure you want to rename this file ?'
+      [ "$(_gcfg_answer 'y/n')" == 'n' ] && exit 0
+    fi
+    # ... link type
+    GCFG_LINK='hard'
+    if [ -h "${GCFG_FILE_SRC}" ]; then
+      GCFG_LINK='symbolic'
+    elif [ "$(stat "${GCFG_FILE_SRC}" | fgrep 'Links: ' | sed 's|.*Links: *||')" == '1' ]; then
+      GCFG_LINK='copy'
+    fi
+    # ... move file in GIT
+    GCFG_FILE_SRC_GIT="$(_gcfg_path_git "${GCFG_FILE_SRC}")" || exit $?
+    GCFG_FILE_DST_GIT="$(_gcfg_path_git "${GCFG_FILE_DST}")" || exit $?
+    GCFG_FILE_DST_GIT_DIR="$(dirname "${GCFG_FILE_DST_GIT}")"
+    [ ! -e "${GCFG_FILE_DST_GIT_DIR}" ] && mkdir -p "${GCFG_FILE_DST_GIT_DIR}"
+    _gcfg_pushd || exit $?
+    git mv "${GCFG_FILE_SRC##/}" "${GCFG_FILE_DST##/}" >/dev/null
+    late_exit=$?
+    [ ${late_exit} -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to rename file in GIT' "${GCFG_FILE_SRC_GIT} -> ${GCFG_FILE_DST_GIT}"
+    _gcfg_popd || exit $?
+    [ ${late_exit} -ne 0 ] && exit ${late_exit}
+    # ... backup original file
+    GCFG_FILE_SRC_ORIG="$(_gcfg_path_original "${GCFG_FILE_SRC}")" || exit $?
+    GCFG_FILE_DST_ORIG="$(_gcfg_path_original "${GCFG_FILE_DST}")" || exit $?
+    if [ ! -e "${GCFG_FILE_DST_ORIG}" ]; then
+      GCFG_FILE_DST_ORIG_SRC=
+      if [ -e "${GCFG_FILE_DST}" ]; then
+        GCFG_FILE_DST_ORIG_SRC="${GCFG_FILE_DST}"
+      elif [ -e "${GCFG_FILE_SRC_ORIG}" ]; then
+        GCFG_FILE_DST_ORIG_SRC="${GCFG_FILE_SRC_ORIG}"
+      fi
+      if [ -n "${GCFG_FILE_DST_ORIG_SRC}" ]; then
+        GCFG_FILE_DST_ORIG_DIR="$(dirname "${GCFG_FILE_DST_ORIG}")"
+        [ ! -e "${GCFG_FILE_DST_ORIG_DIR}" ] && mkdir -p "${GCFG_FILE_DST_ORIG_DIR}"
+        [ ! -d "${GCFG_FILE_DST_ORIG_DIR}" ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create directory' "${GCFG_FILE_DST_ORIG_DIR}" && exit 1
+        cp -p "${GCFG_FILE_DST_ORIG_SRC}" "${GCFG_FILE_DST_ORIG}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_DST_ORIG_SRC} -> ${GCFG_FILE_DST_ORIG}" && exit 1
+      fi
+    fi
+    rm -f "${GCFG_FILE_SRC_ORIG}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_SRC_ORIG}" && exit 1
+    # ... copy flags
+    GCFG_FILE_SRC_FLAG="$(_gcfg_path_flag "${GCFG_FILE_SRC}")" || exit $?
+    GCFG_FLAGS="$(ls -1 "${GCFG_FILE_SRC_FLAG}"\{*\} 2>/dev/null | sed 's/.*{\([^}]*\)}$/\1/' | sort)"
+    late_exit=${PIPESTATUS[0]}
+    [ ${late_exit} -ne 0 ] && exit ${late_exit}
+    if [ -n "${GCFG_FLAGS}" ]; then
+      GCFG_FILE_DST_FLAG="$(_gcfg_path_flag "${GCFG_FILE_DST}")" || exit $?
+      GCFG_FILE_DST_FLAG_DIR="$(dirname "${GCFG_FILE_DST_FLAG}")"
+      [ ! -e "${GCFG_FILE_DST_FLAG_DIR}" ] && mkdir -p "${GCFG_FILE_DST_FLAG_DIR}"
+      for flag in ${GCFG_FLAGS}; do
+        GCFG_FILE_DST_FLAG="$(_gcfg_path_flag "${GCFG_FILE_DST}" "${flag}")" || exit $?
+        touch "${GCFG_FILE_DST_FLAG}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to create file' "${GCFG_FILE_DST_FLAG}" && exit 1
+      done
+    fi
+    for flag in "${GCFG_FILE_SRC_FLAG}"\{*\}; do
+      rm -f "${flag}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${flag}" && exit 1
+    done
+    # ... link back
+    rm -f "${GCFG_FILE_DST}"
+    GCFG_FILE_DST_DIR="$(dirname "${GCFG_FILE_DST}")"
+    [ ! -e "${GCFG_FILE_DST_DIR}" ] && mkdir -p "${GCFG_FILE_DST_DIR}"
+    if [ "${GCFG_LINK}" == 'copy' ]; then
+      # ... copy back
+      cp -p "${GCFG_FILE_DST_GIT}" "${GCFG_FILE_DST}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to copy file' "${GCFG_FILE_DST_GIT} -> ${GCFG_FILE_DST}" && exit 1
+    elif [ "${GCFG_LINK}" == 'symbolic' ]; then
+      # ... symlink back
+      ln -s "${GCFG_FILE_DST_GIT}" "${GCFG_FILE_DST}"
+      [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE_DST} -> ${GCFG_FILE_DST_GIT}" && exit 1
+    else
+      # ... hardlink back
+      ln "${GCFG_FILE_DST_GIT}" "${GCFG_FILE_DST}"
+      if [ $? -ne 0 ]; then
+        _gcfg_warning "${GCFG_ACTION}" 'Failed to hardlink file; symlinking instead' "${GCFG_FILE_DST} -> ${GCFG_FILE_DST_GIT}"
+        ln -s "${GCFG_FILE_DST_GIT}" "${GCFG_FILE_DST}"
+        [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to symlink file' "${GCFG_FILE_DST} -> ${GCFG_FILE_DST_GIT}" && exit 1
+      fi
+    fi
+    rm -f "${GCFG_FILE_SRC}"
+    [ $? -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_SRC}" && exit 1
+    # ... cleanup directories
+    _gcfg_rmdir "$(dirname "${GCFG_FILE_SRC}")"
     ;;
 
   'rm')
@@ -239,14 +354,14 @@ case "${GCFG_ACTION}" in
       fi
     else
       [ ! -e "${GCFG_FILE_GIT}" ] && _gcfg_error "${GCFG_ACTION}" 'Missing/non-existant file' "${GCFG_FILE_GIT}" && exit 1
-      _gcfg_confirm "${GCFG_ACTION}" 'Are you sure you want to remove from the configuration repository ?'
+      _gcfg_confirm "${GCFG_ACTION}" 'Are you sure you want to remove this file from the configuration repository ?'
       [ "$(_gcfg_answer 'y/n')" == 'n' ] && exit 0
     fi
     # ... remove file from GIT
-    late_exit=0
     _gcfg_pushd || exit $?
     git rm --force "${GCFG_FILE##/}" >/dev/null
-    [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file from GIT' "${GCFG_FILE_GIT}"
+    late_exit=$?
+    [ ${late_exit} -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file from GIT' "${GCFG_FILE_GIT}"
     _gcfg_popd || exit $?
     [ ${late_exit} -ne 0 ] && exit ${late_exit}
     # ... remove file flags
@@ -607,10 +722,10 @@ case "${GCFG_ACTION}" in
               ;;
             'p')
               # ... remove file from GIT
-              late_exit=0
               _gcfg_pushd || exit $?
               git rm --force "${GCFG_FILE##/}"
-              [ $? -ne 0 ] && late_exit=$? && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}"
+              late_exit=$?
+              [ ${late_exit} -ne 0 ] && _gcfg_error "${GCFG_ACTION}" 'Failed to remove file' "${GCFG_FILE_GIT}"
               _gcfg_popd || exit $?
               [ ${late_exit} -ne 0 ] && unset late_exit && break
               unset late_exit

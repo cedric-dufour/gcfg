@@ -23,7 +23,7 @@ _gcfg()
       @(list))
         COMPREPLY=( $( compgen -W '@EDITED @FLAGS' -- "$cur" ) )
       ;;
-      @(a2ps|new|copy|edit|perm|rm|orig|diff|delta|flag|flagged|unflag))
+      @(a2ps|new|copy|edit|perm|mv|rm|orig|diff|delta|flag|flagged|unflag))
         _filedir
       ;;
       @(git))
@@ -33,7 +33,7 @@ _gcfg()
   elif [ $COMP_CWORD -eq 3 ]; then
     local prev=${COMP_WORDS[COMP_CWORD-2]}
     case "$prev" in
-      @(copy))
+      @(copy|mv))
         _filedir
       ;;
     esac

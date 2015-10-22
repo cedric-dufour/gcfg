@@ -67,6 +67,10 @@ ACTIONS:
     Add the given file to/from the configuration repository
     (using symlink or copy operation instead of hardlink)
 
+  mv <file> <destination>
+    Move the given file from source to destination
+    (including flags and original version)
+
   copy [--batch] [--symbolic|--copy] [--force] <file> <source>
   rm [--batch] [--force] <file>
     Copy/remove the given file from the given source, provided it has not been

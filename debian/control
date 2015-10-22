@@ -2,7 +2,9 @@ Source: gcfg
 Section: admin
 Priority: optional
 Maintainer: Cedric Dufour <cedric.dufour@ced-network.net>
-Build-Depends: debhelper (>= 5) 
+Build-Depends: debhelper (>= 8) 
+Homepage: https://github.com/cedric-dufour/gcfg
+Standards-Version: 3.9.4
 
 Package: gcfg
 Architecture: all

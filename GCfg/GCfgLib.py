@@ -252,7 +252,12 @@ class GCfgLib:
         """
 
         self._DEBUG('Copying file/directory; %s => %s' % (_sSource, _sDestination))
+        oStat = os.stat(_sSource)
         shutil.copy2(_sSource, _sDestination)
+        try:
+            os.chown(_sDestination, oStat.st_uid, oStat.st_gid)
+        except OSError as e:
+            self._WARNING('Failed to set file ownership; %s => %s' % (_sSource, _sDestination))
 
 
     def _mv(self, _sSource, _sDestination):
@@ -264,7 +269,12 @@ class GCfgLib:
         """
 
         self._DEBUG('Moving file/directory; %s => %s' % (_sSource, _sDestination))
+        oStat = os.stat(_sSource)
         shutil.move(_sSource, _sDestination)
+        try:
+            os.chown(_sDestination, oStat.st_uid, oStat.st_gid)
+        except OSError as e:
+            self._WARNING('Failed to set file ownership; %s => %s' % (_sSource, _sDestination))
 
 
     def _rm(self, _sFile):

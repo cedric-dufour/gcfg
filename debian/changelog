@@ -1,3 +1,18 @@
+gcfg (2.0.20151103e~rc1) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - MOD: Switched to GNU Public License version 3 (GPLv3)
+  - MOD: Removed those ugly .TXT extensions
+  - ADD: Official homepage
+  - MOD: Bumped Debian packaging standards version
+  - NEW: Hail the new GCFG Python 2.x library and utility!
+  - MOD: Make the (bash) frontend utilities use the new Python 2.x
+         framework
+  - NEW: Flags files migration utility
+  - MOD: Python-2.6-and-2.7-friendly Debian packaging
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Mon,  3 Nov 2015 15:20:35 +0100
+
 gcfg (0.9.20151022a) UNRELEASED; urgency=low
 
   * New version (see https://github.com/cedric-dufour/gcfg for changelog)

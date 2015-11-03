@@ -1,109 +1,100 @@
 GIT-based Configuration Tracking Utility (GCFG)
 ===============================================
 
-The objective of this utility is to allow the tracking and versioning of
-(standard configuration) files on a system, in a manner that makes it easy to
-have a global overview of how the system is configured and what changes were
-made.
+The objective of the GIT-based Configuration Tracking Utility (GCFG) is to
+allow the tracking and versioning of (mostly configuration) files on a system,
+in a manner that makes it easy to have a global overview of how the system is
+configured and what changes were made.
 
 By default, it uses a centralized repository in '/etc/gcfg' (though an alternate
 directory may be specified when configuring the utility). This directory holds:
- - a GIT repository ('/etc/gcfg/git'), used for versioning changes
- - an "original backup" directory ('/etc/gcfg/original'), used to keep a copy of
-   original files
- - a "flag" directory ('/etc/gcfg/flag'), used to associate flags to files
- - a packages listing file ('/etc/gcfg/pkglist'), automatically updated before
-   each commit
 
-Before issuing any 'gcfg' commands, one must first configure the utility envi-
-ronment using the 'source gcfg.config' command. The purpose of this command is
-both to verify/create the centralized repository and save the details of the
-current author.
+ * a GIT (sub-)repository ('/etc/gcfg/git'), used for versioning changes
 
-When a file is added ('gcfg new'), copied ('gcfg copy') or edited ('gcfg edit'):
+ * an "original" (sub-)repository ('/etc/gcfg/original'), used to keep a
+   copy of original files
 
- 1. It is first moved within the scope of the GIT repository, keeping its
-    absolute (but therefrom relative) path.
-    Corresponding GIT commands ('gcfg log', 'gcfg diff', 'gcfg commit', etc.)
-    then allows to keep track of all changes made to that file.
+ * a "flag" (sub-)repository ('/etc/gcfg/flag'), used to associate flags
+   to files
 
- 2. The GIT-tracked file is then symlinked back to its original/standard
-    location.
+ * a packages listing file ('/etc/gcfg/pkglist'), which lists all the packages
+   that are marked as "manually" installed
 
- 3. When specified, a copy of the original (pristine) version is be kept in the
-    dedicated backup directory.
-    The original version is then always handy thanks to the 'gcfg orig' command,
-    while relative changes (diff) may be seen using the 'gcfg delta' command.
+Before issuing any 'gcfg' commands, one may first configure the utility environ-
+ment (GCFG_* variables) using the 'source gcfg' command.
+
+When a file is added ('gcfg add'), copied ('gcfg copy') or edited ('gcfg edit'):
+
+ 1. It is first moved within the scope of the GIT (sub-)repository.
+    GIT commands ('gcfg git ...') then allows to keep track of all changes
+    made to that file.
+
+ 2. The GIT-tracked file is then linked back to its original/standard location,
+    using either:
+      - hard linking, by default
+      - symbolic linking, in special directories like '/etc/cron.d'
+      - file copy, when filesystems boundaries are crossed
+
+ 3. When specified, a copy of the original version is kept in the "original"
+    (sub-)repository.
+    The original version is then always handy thanks to the 'gcfg orig'
+    command, while changes relative to that original version may be seen
+    using the 'gcfg delta' command.
 
  4. Flags can also be associated to the file, for any purpose that may be
-    required by the operator. One such flag is the "@EDITED" flag, which is set
-    as soon as the file has been modified with 'gcfg edit'.
+    required by the operator.
+    One such flag is the "@EDITED" flag, which is set as soon as the file
+    has been modified with 'gcfg edit'.
     Flags management is performed using the 'gcfg flag', 'gcfg unflag' and
     'gcfg flagged' commands.
 
 A global overview of changes can then easily be obtained using the 'gcfg list'
 command, or even saved in a Postscript file using the 'gcfg a2ps' command.
+
 All modified files being within the scope of a single GIT repository, backup,
 versions tracking and collaborative management are easily performed thanks
 to GIT.
 
-
 --
 
-USAGE: gcfg <action> [<parameter> ...]
+usage: gcfg <command>
 
-SYNOPSIS:
-  Perform the requested action in the configuration repository.
+commands:
+  init:
+    Initializes the configuration repository
 
-ACTIONS:
-  list [<flag>|@FLAGS]
-    List the content of the configuration repository (matching the given
-    optional flag or GIT status)
+  verify:
+    Verify the consistency of the configuration repository (links)
 
-  a2ps <output-file>
+  list:
+    List the files in the configuration repository
+
+  add (new), copy (cp), move (mv), remove (rm):
+    Add, copy, move or remove a file in the configuration repository
+
+  edit:
+    Edit a file (after adding it to the configuration repository)
+
+  permissions (perm, chmod, chown):
+    Show/change the permissions of a file
+
+  flag, unflag, flagged:
+    Add, remove or check/retrieve a flag to/from a file
+
+  original (orig):
+    Show the original content of a file
+
+  delta:
+    Show the differences between a file and its original content
+
+  pkglist, pkgsave, pkgdiff:
+    Display, save or diff the list of installed packages
+
+  git:
+    Perform the corresponding command within the GIT sub-repository
+
+  a2ps:
     Create a Postscript document with all files in the configuration repository
 
-  new [--batch] [--symbolic|--copy] <file> [<original-file>]
-    Add the given file to/from the configuration repository
-    (using symlink or copy operation instead of hardlink)
-
-  mv <file> <destination>
-    Move the given file from source to destination
-    (including flags and original version)
-
-  copy [--batch] [--symbolic|--copy] [--force] <file> <source>
-  rm [--batch] [--force] <file>
-    Copy/remove the given file from the given source, provided it has not been
-    edited (unless '--force' is specified)
-    (using symlink or copy operation instead of hardlink)
-
-  edit <file>
-    Edit the given file (after adding it to the configuration repository)
-
-  perm <file> [<mode> [<ownership>]]
-    Show/change the permissions of the given file
-
-  orig <file>
-    Show the original version of the given file
-
-  diff <file>
-    Show the differences between the given file and its previous GIT version
-
-  delta <file> [<comment-prefix>='#']
-    Show the differences between the given file and its original version,
-    with all comments stripped out
-
-  flag|unflag <file> <flag>
-  flagged <file> [<flag>]
-    Set|show/check|remove the specified flag for the given file
-
-  verify
-    Verify the consistency between the configuration repository and the actual
-    files
-
-  pkglist
-    Update the list of installed packages
-
-  git <git-command> [<git-parameter> ...]
-    Perform the corresponding command within the GIT repository
-    (see 'git help ...' for available commands/parameters)
+further help:
+  gcfg <command> --help

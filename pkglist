@@ -1,3 +1,0 @@
-#!/bin/bash
-exec aptitude search --disable-columns --display-format '%p' --sort 'name' '?and(?installed,?not(?automatic))'
-

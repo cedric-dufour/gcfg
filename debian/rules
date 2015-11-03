@@ -1,91 +1,147 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
-# Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
+export PACKAGE = gcfg
+export VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
 
-DEB_VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
-DEB_NOEPOCH_VERSION := $(shell echo $(DEB_VERSION) | cut -d: -f2-)
-DEB_UPSTREAM_VERSION := $(shell echo $(DEB_NOEPOCH_VERSION) | sed 's/-[^-]*$$//')
+# Required for 'help2man'
+export PYTHONPATH:=.:${PYTHONPATH}
+export PATH:=.:${PATH}
 
-DEB_PACKAGE_SOURCE = gcfg-source
-DEB_PACKAGE = gcfg
+%:
+	dh $@
 
-.PHONY: build clean install binary-indep binary-arch binary
+override_dh_pysupport:
+	# NOTE: we implement our own 'python-support' in order to package Python 2.6
+	#       even on platforms where it is deprecated
 
-build: build-stamp
+override_dh_install:
+	# Support given Python2 versions
+	debian/pyshared debian/tmp 2.6 2.7
 
-build-stamp:
-	dh_testdir
-	touch build-stamp
+	# Fix global variables
+	sed -i "s|GCFG_VERSION\s*=.*|GCFG_VERSION = '$(VERSION)'|" debian/tmp/usr/share/pyshared/GCfg/__init__.py
 
-clean:
-	dh_testdir
-	dh_testroot
-	dh_clean build-stamp
+	# Install additional stuff
+	mkdir -p debian/tmp/usr/bin
+	cp gcfg gsed debian/tmp/usr/bin/.
+	mkdir -p debian/tmp/usr/share/$(PACKAGE)
+	cp gcfg.migrate gcfg.config debian/tmp/usr/share/$(PACKAGE)/.
+	ln -s /usr/share/$(PACKAGE)/gcfg.config debian/tmp/usr/bin/gcfg.config
+	mkdir -p debian/tmp/etc/bash_completion.d
+	cp gcfg.bash_completion debian/tmp/etc/bash_completion.d/gcfg
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
+	# Create man pages
+	mkdir -p debian/tmp/usr/share/man/man1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG)' \
+		--help-option '--help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' > debian/tmp/usr/share/man/man1/gcfg.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): init' \
+		--help-option 'init --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-init.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): verify' \
+		--help-option 'verify --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-verify.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): list' \
+		--help-option 'list --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-list.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): add' \
+		--help-option 'add --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-add.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): copy' \
+		--help-option 'copy --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-copy.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): move' \
+		--help-option 'move --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-move.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): remove' \
+		--help-option 'remove --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-remove.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): edit' \
+		--help-option 'edit --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-edit.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): permissions' \
+		--help-option 'permissions --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-permissions.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): flag' \
+		--help-option 'flag --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-flag.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): unflag' \
+		--help-option 'unflag --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-unflag.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): flagged' \
+		--help-option 'flagged --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-flagged.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): original' \
+		--help-option 'original --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-original.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): delta' \
+		--help-option 'delta --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-delta.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): pkglist' \
+		--help-option 'pkglist --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-pkglist.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): pkgsave' \
+		--help-option 'pkgsave --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-pkgsave.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): pkgdiff' \
+		--help-option 'pkgdiff --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-pkgdiff.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): git' \
+		--help-option 'git --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-git.1
+	help2man \
+		--name 'GIT-based Configuration Tracking Utility (GCFG): a2ps' \
+		--help-option 'a2ps --help' --version-string $(VERSION) --no-discard-stderr --no-info \
+		gcfg | fgrep -v 'invalid option' | sed 's|^usage: |usage: gcfg |' > debian/tmp/usr/share/man/man1/gcfg-a2ps.1
 
-	# Create the Debian packages
+	# Install
+	dh_install
 
-	# ... DEB_PACKAGE
-	mkdir -p debian/$(DEB_PACKAGE)/usr/bin
-	cp gcfg gsed pkglist debian/$(DEB_PACKAGE)/usr/bin/.
-	mkdir -p debian/$(DEB_PACKAGE)/usr/share/$(DEB_PACKAGE)
-	cp gcfg.functions gcfg.config debian/$(DEB_PACKAGE)/usr/share/$(DEB_PACKAGE)/.
-	ln -s /usr/share/$(DEB_PACKAGE)/gcfg.functions debian/$(DEB_PACKAGE)/usr/bin/gcfg.functions
-	ln -s /usr/share/$(DEB_PACKAGE)/gcfg.config debian/$(DEB_PACKAGE)/usr/bin/gcfg.config
-	mkdir -p debian/$(DEB_PACKAGE)/etc/bash_completion.d
-	cp gcfg.bash_completion debian/$(DEB_PACKAGE)/etc/bash_completion.d/gcfg
-	mkdir -p debian/$(DEB_PACKAGE)/usr/share/doc/$(DEB_PACKAGE)
-	cp *.TXT debian/$(DEB_PACKAGE)/usr/share/doc/$(DEB_PACKAGE)/.
-	sed -i "s/@version@/$(DEB_UPSTREAM_VERSION)/g" debian/$(DEB_PACKAGE)/usr/share/doc/$(DEB_PACKAGE)/*.TXT
-
-# Build architecture-dependent files here.
-binary-arch: build install
-# We have nothing to do by default.
-
-# Build architecture-independent files here.
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
+override_dh_installdocs:
+	dh_installdocs README
 
 build-source-tarball:
 	dh_testdir
 	dh_clean build-stamp
 	# Create the source tarball
-	mkdir -p /tmp/$(DEB_PACKAGE_SOURCE)-$(DEB_UPSTREAM_VERSION)
-	cp -r * /tmp/$(DEB_PACKAGE_SOURCE)-$(DEB_UPSTREAM_VERSION)/.
-	tar -C /tmp -cjf ../$(DEB_PACKAGE_SOURCE)-$(DEB_UPSTREAM_VERSION).tar.bz2 $(DEB_PACKAGE_SOURCE)-$(DEB_UPSTREAM_VERSION)
-	rm -rf /tmp/$(DEB_PACKAGE_SOURCE)-$(DEB_UPSTREAM_VERSION)
+	mkdir -p /tmp/$(PACKAGE)-source-$(VERSION)
+	cp -r * /tmp/$(PACKAGE)-source-$(VERSION)/.
+	tar -C /tmp -cjf ../$(PACKAGE)-source-$(VERSION).tar.bz2 $(PACKAGE)-source-$(VERSION)
+	rm -rf /tmp/$(PACKAGE)-source-$(VERSION)
 
 build-install-tarball:
 	# Create the installation tarball
 	# WARNING: make install before-hand!
-	mkdir -p /tmp/$(DEB_PACKAGE)-$(DEB_UPSTREAM_VERSION)/
-	cp -rp debian/$(DEB_PACKAGE)/usr/bin/* /tmp/$(DEB_PACKAGE)-$(DEB_UPSTREAM_VERSION)/.
-	tar -C /tmp -cjf ../$(DEB_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.bz2 $(DEB_PACKAGE)-$(DEB_UPSTREAM_VERSION)
-	rm -rf /tmp/$(DEB_PACKAGE)-$(DEB_UPSTREAM_VERSION)
+	mkdir -p /tmp/$(PACKAGE)-$(VERSION)/
+	cp -rp debian/tmp/usr debian/tmp/etc /tmp/$(PACKAGE)-$(VERSION)/.
+	tar -C /tmp -cjf ../$(PACKAGE)-$(VERSION).tar.bz2 $(PACKAGE)-$(VERSION)
+	rm -rf /tmp/$(PACKAGE)-$(VERSION)
 
 debian-packages:
 	debuild -us -uc -b
 
 debian-source:
-	debuild -I'.git*' -us -uc -S
+	debuild -I'.git*' -I'*.pyc' -us -uc -S
 
 release: debian-packages build-install-tarball debian-source build-source-tarball
 

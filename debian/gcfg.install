@@ -1,0 +1,4 @@
+debian/tmp/usr/bin
+debian/tmp/usr/share/gcfg
+debian/tmp/usr/share/man
+debian/tmp/etc/bash_completion.d

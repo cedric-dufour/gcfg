@@ -27,7 +27,7 @@ import grp
 import errno
 import os
 import pwd
-from stat import *
+import stat
 import sys
 import textwrap
 
@@ -81,52 +81,6 @@ class GCfgPermissions(GCfgExec):
     # METHODS
     #------------------------------------------------------------------------------
 
-    #
-    # Helper
-    #
-
-    def filemode(self, mode):
-        """
-        Convert a file's mode to a string of the form '-rwxrwxrwx'.
-        (COPIED FROM https://hg.python.org/cpython/file/3.3/Lib/stat.py; THIS FUNCTION IS __NOT__ COVERED BY GCFG COPYRIGHT)
-        """
-
-        filemode_table = (
-            ((S_IFLNK, 'l'),
-             (S_IFREG, '-'),
-             (S_IFBLK, 'b'),
-             (S_IFDIR, 'd'),
-             (S_IFCHR, 'c'),
-             (S_IFIFO, 'p')),
-
-            ((S_IRUSR, 'r'),),
-            ((S_IWUSR, 'w'),),
-            ((S_IXUSR|S_ISUID, 's'),
-             (S_ISUID, 'S'),
-             (S_IXUSR, 'x')),
-
-            ((S_IRGRP, 'r'),),
-            ((S_IWGRP, 'w'),),
-            ((S_IXGRP|S_ISGID, 's'),
-             (S_ISGID, 'S'),
-             (S_IXGRP, 'x')),
-
-            ((S_IROTH, 'r'),),
-            ((S_IWOTH, 'w'),),
-            ((S_IXOTH|S_ISVTX, 't'),
-             (S_ISVTX, 'T'),
-             (S_IXOTH, 'x'))
-        )
-        perm = []
-        for table in filemode_table:
-            for bit, char in table:
-                if mode & bit == bit:
-                    perm.append(char)
-                    break
-            else:
-                perm.append('-')
-        return ''.join(perm)
-
 
     #
     # Main
@@ -157,7 +111,7 @@ class GCfgPermissions(GCfgExec):
             self._oArguments.owner
         )
         sys.stdout.write('%s/%s %s:%s %s\n' % (
-            oct(iMode)[-4:], self.filemode(iMode),
+            oct(iMode)[-4:], stat.filemode(iMode),
             pwd.getpwuid(iUID)[0],
             grp.getgrgid(iGID)[0],
             self._oArguments.file

@@ -257,7 +257,7 @@ class GCfgLib:
         try:
             os.chown(_sDestination, oStat.st_uid, oStat.st_gid)
         except OSError as e:
-            self._WARNING('Failed to set file ownership; %s => %s' % (_sSource, _sDestination))
+            self._WARNING('Failed to preserve file ownership; %s => %s' % (_sSource, _sDestination))
 
 
     def _mv(self, _sSource, _sDestination):
@@ -274,7 +274,7 @@ class GCfgLib:
         try:
             os.chown(_sDestination, oStat.st_uid, oStat.st_gid)
         except OSError as e:
-            self._WARNING('Failed to set file ownership; %s => %s' % (_sSource, _sDestination))
+            self._WARNING('Failed to preserve file ownership; %s => %s' % (_sSource, _sDestination))
 
 
     def _rm(self, _sFile):

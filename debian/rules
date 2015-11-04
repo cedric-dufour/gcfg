@@ -9,7 +9,7 @@ export PYTHONPATH:=.:${PYTHONPATH}
 export PATH:=.:${PATH}
 
 %:
-	dh $@
+	dh $@ --with python2 --buildsystem=pybuild
 
 override_dh_pysupport:
 	# NOTE: we implement our own 'python-support' in order to package Python 2.6
@@ -144,4 +144,3 @@ debian-source:
 	debuild -I'.git*' -I'*.pyc' -us -uc -S
 
 release: debian-packages build-install-tarball debian-source build-source-tarball
-

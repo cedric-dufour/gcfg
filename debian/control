@@ -2,7 +2,7 @@ Source: gcfg
 Section: admin
 Priority: optional
 Maintainer: Cedric Dufour <cedric.dufour@ced-network.net>
-Build-Depends: python (>= 2.6), python (<< 3), python-support, debhelper (>= 8), bash, help2man
+Build-Depends: python (>= 2.6), python (<< 3), debhelper (>= 8), dh-python, bash, help2man
 XS-Python-Version: 2.6, 2.7
 Homepage: https://github.com/cedric-dufour/gcfg
 Standards-Version: 3.9.4

@@ -1,3 +1,9 @@
+gcfg (3.0.20151104a~beta) UNRELEASED; urgency=low
+
+  * BETA (gcfg_3.x/Python 3.x branch)
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Tue,  4 Nov 2015 12:15:54 +0100
+
 gcfg (2.0.20151103f~rc1) UNRELEASED; urgency=low
 
   * NEW RELEASE

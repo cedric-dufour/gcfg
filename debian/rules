@@ -9,18 +9,11 @@ export PYTHONPATH:=.:${PYTHONPATH}
 export PATH:=.:${PATH}
 
 %:
-	dh $@
-
-override_dh_pysupport:
-	# NOTE: we implement our own 'python-support' in order to package Python 2.6
-	#       even on platforms where it is deprecated
+	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_install:
-	# Support given Python2 versions
-	debian/pyshared debian/tmp 2.6 2.7
-
 	# Fix global variables
-	sed -i "s|GCFG_VERSION\s*=.*|GCFG_VERSION = '$(VERSION)'|" debian/tmp/usr/share/pyshared/GCfg/__init__.py
+	sed -i "s|GCFG_VERSION\s*=.*|GCFG_VERSION = '$(VERSION)'|" debian/tmp/usr/lib/*/dist-packages/GCfg/__init__.py
 
 	# Install additional stuff
 	mkdir -p debian/tmp/usr/bin

@@ -2,14 +2,14 @@ Source: gcfg
 Section: admin
 Priority: optional
 Maintainer: Cedric Dufour <cedric.dufour@ced-network.net>
-Build-Depends: python (>= 2.6), python (<< 3), python-support, debhelper (>= 8), bash, help2man
-XS-Python-Version: 2.6, 2.7
+Build-Depends: python3 (>= 3.4), debhelper (>= 8), bash, help2man
+X-Python3-Version: >= 3.4
 Homepage: https://github.com/cedric-dufour/gcfg
 Standards-Version: 3.9.4
 
 Package: gcfg
 Architecture: all
-Depends: bash, gcfg-python2.7 | gcfg-python2.6
+Depends: bash, gcfg-python3
 Recommends: diffutils, a2ps
 Description: GIT-based Configuration Tracking Utility (GCFG)
  The objective of the GIT-based Configuration Tracking Utility (GCFG) is to
@@ -66,18 +66,7 @@ Description: GIT-based Configuration Tracking Utility (GCFG)
  versions tracking and collaborative management are easily performed thanks
  to GIT.
 
-Package: gcfg-pyshared
+Package: gcfg-python3
 Architecture: all
-Depends: python (>= 2.6), python (<< 3), python-argparse, git-core, aptitude
-Description: GIT-based Configuration Tracking Utility (GCFG) - Python 2.x library
-
-Package: gcfg-python2.6
-Architecture: all
-Depends: python (>= 2.6), python (<< 2.7), gcfg-pyshared
-Description: GIT-based Configuration Tracking Utility (GCFG) - Python 2.6 packaging
-
-Package: gcfg-python2.7
-Architecture: all
-Depends: python (>= 2.7), python (<< 2.8), gcfg-pyshared
-Description: GIT-based Configuration Tracking Utility (GCFG) - Python 2.7 packaging
-
+Depends: python3 (>= 3.4), git-core, aptitude
+Description: GIT-based Configuration Tracking Utility (GCFG) - Python 3.x library

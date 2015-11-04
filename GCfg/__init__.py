@@ -21,5 +21,5 @@
 GCFG_VERSION = '%{VERSION}'
 
 # Dependencies
-from GCfgLib import GCfgLib
-from GCfgExec import GCfgExec
+from .GCfgLib import GCfgLib
+from .GCfgExec import GCfgExec

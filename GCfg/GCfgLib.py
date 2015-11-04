@@ -159,7 +159,7 @@ class GCfgLib:
         # Input
         while True:
             sys.stdout.write(sPrompt)
-            sChoice = raw_input().lower()
+            sChoice = input().lower()
             if not sChoice and sOptionDefault is not None:
                 sChoice = sOptionDefault
             if sChoice in lOptions or sChoice==sOptionDefault:
@@ -316,10 +316,13 @@ class GCfgLib:
                 cwd=_sWorkingDirectory,
                 stderr=subprocess.PIPE
             )
-        (sStdOut, sStdErr) = oPopen.communicate()
+        (bStdOut, bStdErr) = oPopen.communicate()
         if not _bIgnoreReturnCode and oPopen.returncode!=0:
-            raise EnvironmentError(oPopen.returncode, sStdErr)
-        return sStdOut
+            raise EnvironmentError(oPopen.returncode, bStdErr.decode(sys.getfilesystemencoding()))
+        if bStdOut is not None:
+            return bStdOut.decode(sys.getfilesystemencoding())
+        else:
+            return None
 
 
     def getCanonicalPath(self, _sPath, _bAllowDirectory=False):
@@ -791,7 +794,7 @@ class GCfgLib:
                     if sRepository!='git':
                         sPlaceholder = os.path.join(sPath, '.placeholder')
                         with open(sPlaceholder, 'w') as fPlaceholder:
-                            os.chmod(sPlaceholder, 0444)
+                            os.chmod(sPlaceholder, 0o444)
                 else:
                     raise EnvironmentError(errno.ENOENT, 'Sub-repository directory is missing')
             if not os.path.isdir(sPath):
@@ -949,7 +952,7 @@ class GCfgLib:
                 # Match GIT flags
                 self._DEBUG('Matching files GIT status; %s' % _sFlag)
                 lFiles = self._shellCommand(['find', '.', '-type', 'f', '-not', '-path', './.git/*'], self.__asSubRepositories['git']).splitlines()
-                lFiles = map(lambda s:s.lstrip('.'), lFiles)
+                lFiles = [s.lstrip('.') for s in lFiles]
                 dlFiles = {}
                 for sFileActual in lFiles:
                     if sFileActual in dsFiles_git:
@@ -974,14 +977,14 @@ class GCfgLib:
                 # Find all files matching flag
                 self._DEBUG('Matching files flags; %s' % _sFlag)
                 lFiles = self._shellCommand(['find', '.', '-type', 'f', '-not', '-name', '.placeholder', '-exec', 'grep', '-q', '^%s$' % _sFlag, '{}', ';', '-print'], self.__asSubRepositories['flag']).splitlines()
-                dlFiles = dict.fromkeys(map(lambda s:s.lstrip('.'), lFiles))
+                dlFiles = dict.fromkeys([s.lstrip('.') for s in lFiles])
 
         # List
         if dlFiles is None:
             # Retrieve list of all GIT files
             self._DEBUG('Retrieving GIT files list')
             lFiles = self._shellCommand(['find', '.', '-type', 'f', '-not', '-path', './.git/*'], self.__asSubRepositories['git']).splitlines()
-            dlFiles = dict.fromkeys(map(lambda s:s.lstrip('.'), lFiles))
+            dlFiles = dict.fromkeys([s.lstrip('.') for s in lFiles])
 
         # Add flags
         if _sFlag=='@FLAGS':
@@ -1942,18 +1945,18 @@ class GCfgLib:
             stderr=subprocess.PIPE
         )
         oPopen.stdout.close()
-        (sStdOut, sStdErr) = oPopen_sub.communicate()
+        (bStdOut, bStdErr) = oPopen_sub.communicate()
         if oPopen_sub.returncode!=0:
-            raise EnvironmentError(oPopen_sub.returncode, sStdErr)
+            raise EnvironmentError(oPopen_sub.returncode, bStdErr.decode(sys.getfilesystemencoding()))
         dlFiles = {}
-        for sLine in sStdOut.splitlines():
+        for sLine in bStdOut.decode(sys.getfilesystemencoding()).splitlines():
             iSeparator = sLine.rfind(':')
             dlFiles[sLine[:iSeparator].lstrip('.')] = sLine[iSeparator+1:].strip()
 
         # Filter non-text files out
         self._DEBUG('Filtering (text) files; flag=%s' % _sFlag)
         lFiles = []
-        for sFile, sType in dlFiles.iteritems():
+        for sFile, sType in dlFiles.items():
             if self.__reFileText.search(sType) is None:
                 continue
             if _sFlag is not None and not self._flagged(sFile, _sFlag):

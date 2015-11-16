@@ -594,7 +594,7 @@ class GCfgLib:
         elif not os.path.exists(_sFileGIT):
             self._DEBUG('Creating blank GIT file; %s' % _sFileGIT)
             with open(_sFileGIT, 'w') as fFileGIT:
-                os.utime(fFileGIT, None)
+                pass
 
         # Link
         self._DEBUG('Linking file; %s -> %s (%s)' % (_sFileActual, _sFileGIT, sLink_validated))

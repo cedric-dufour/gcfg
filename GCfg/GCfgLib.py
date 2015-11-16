@@ -1330,7 +1330,13 @@ class GCfgLib:
         # Remove GIT file
         self._DEBUG('Removing GIT file and parent directory; %s' % sFileGIT)
         if os.path.exists(sFileGIT):
-            self._gitCommand(['rm', '--force', sFileGIT])
+            try:
+                self._gitCommand(['rm', '--force', sFileGIT])
+            except EnvironmentError as e:
+                # NOTE: 'git rm' will fail on untracked file
+                self._WARNING('Failed to GIT-remove file; %s (%s)' % (_sFileActual, e.strerror))
+                if os.path.exists(sFileGIT):
+                    self._rm(sFileGIT)
         self.rmdir(os.path.dirname(sFileGIT))
 
         # Remove file flags

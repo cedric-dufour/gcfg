@@ -61,6 +61,10 @@ class GCfgOriginal(GCfgExec):
 
         # Additional arguments
         self._oArgumentParser.add_argument(
+            '-P', '--path', action='store_true',
+            help='return the original file content path'
+        )
+        self._oArgumentParser.add_argument(
             'file', type=str, metavar='<file>',
             help='file to show original content from'
         )
@@ -93,5 +97,6 @@ class GCfgOriginal(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        sys.stdout.write(oGCfgLib.original(self._oArguments.file))
+        sys.stdout.write(oGCfgLib.original(self._oArguments.file, self._oArguments.path))
+        if (self._oArguments.path): sys.stdout.write('\n')
         return 0

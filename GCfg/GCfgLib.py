@@ -1724,17 +1724,22 @@ class GCfgLib:
             raise EnvironmentError(e.errno, 'Failed to retrieve flags for file')
 
 
-    def _original(self, _sFileActual):
+    def _original(self, _sFileActual, _bPathOnly=False):
         """
-        Return the original content of the given file.
+        Return the original content (path) of the given file.
 
         @param  string   _sFileActual  Actual file (canonical path)
+        @param  bool     _bPathOnly    Return the original content path
 
-        @return string  File original content
+        @return string  File original content (path)
         """
 
         # Paths
         sFileOriginal = self._getRepositoryPath('original', _sFileActual)
+
+        # Update
+        if _bPathOnly:
+            return sFileOriginal
 
         # Check
         if not os.path.exists(sFileOriginal):
@@ -1747,14 +1752,15 @@ class GCfgLib:
         return sOriginal
 
 
-    def original(self, _sFileActual):
+    def original(self, _sFileActual, _bPathOnly=False):
         """
-        Return the original content of the given file.
+        Return the original content (path) of the given file.
         (including validation, informational messages and exceptions handling)
 
         @param  string   _sFileActual  Actual file (path)
+        @param  bool     _bPathOnly    Return the original content path
 
-        @return string  File original content
+        @return string  File original content (path)
         """
 
         try:
@@ -1768,7 +1774,7 @@ class GCfgLib:
                 raise EnvironmentError(errno.ENOENT, 'No such file (in configuration repository)')
 
             # Show original file
-            return self._original(sFileActual)
+            return self._original(sFileActual, _bPathOnly)
 
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))

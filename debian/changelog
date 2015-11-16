@@ -1,3 +1,16 @@
+gcfg (2.0.20151116c~rc2) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - MOD: Fine-tuned Debian packaging (breaks Debian<Jessie, Ubuntu<Trusty)
+  - FIX: Minor text correction
+  - FIX: Fixed symlinked file creation
+  - FIX: Do not fail when removing files that are (unproperly) untracked in GIT
+  - FIX: Do not dereference symlinks in canonical paths
+  - FIX: Debian packaging (for Debian>=Jessie, Ubuntu>=Trusty)
+  - NEW: Allow to retrieve the original file path
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Mon, 16 Nov 2015 15:55:21 +0100
+
 gcfg (2.0.20151103f~rc1) UNRELEASED; urgency=low
 
   * NEW RELEASE

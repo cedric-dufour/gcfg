@@ -21,8 +21,9 @@ popd >/dev/null
 
 
 ## Variables
-MY_DIR_PYDIST_PREFIX="${MY_ROOT}/usr/lib/python2."
-MY_DIR_PYSHARED="${MY_ROOT}/usr/share/pyshared"
+MY_DIR_COMMON="${MY_ROOT}/usr"
+MY_DIR_PYDIST_PREFIX="${MY_DIR_COMMON}/lib/python2."
+MY_DIR_PYSHARED="${MY_DIR_COMMON}/share/pyshared"
 
 
 ## Check
@@ -44,18 +45,29 @@ mv -v "${MY_DIR_PYDIST}"/* "${MY_DIR_PYSHARED}"/.
 # Remove PyDist directories
 rm -rf "${MY_DIR_PYDIST_PREFIX}"*
 
+# Clean-up byte-compilation output
+find "${MY_DIR_PYSHARED}" -name "*.py[co]" -delete
+
+# Compute relative path "redirections"
+MY_DIR_PYSHARED_DOWN="${MY_DIR_PYSHARED#${MY_DIR_COMMON}/}"
+
 # Symlink PyShared directory content back to PyDist directories
 pushd "${MY_DIR_PYSHARED}" >/dev/null
 while [ -n "${1}" ]; do
   version="${1}"; shift
   [ "${version:0:2}" != '2.' ] && echo "ERROR: Invalid version (${version})" && continue
   pydist="${MY_DIR_PYDIST_PREFIX}${version#2.}/dist-packages"
+  pydist_up="$(echo "${pydist#${MY_DIR_COMMON}/}" | sed 's/[^\/][^\/]*/../g')"
   for content in $(find . -type f); do
     content="${content#./}"
     content_dir="$(dirname "${content}")"
     [ ! -e "${pydist}/${content_dir}" ] && mkdir -p "${pydist}/${content_dir}"
-    ln -sv "${MY_DIR_PYSHARED#${MY_ROOT}}/${content}" "${pydist}/${content_dir}"
+    if [ "${content:${#content}-8:${#content}}" == 'egg-info' ]; then
+      cp -v "${content}" "${pydist}/${content_dir}"
+    else
+      content_dir_up="$(echo "${content_dir}" | sed 's/^\.$//;s/[^\/][^\/]*/../g')"
+      ln -sv "${pydist_up}${content_dir_up:+/}${content_dir_up}/${MY_DIR_PYSHARED_DOWN}/${content}" "${pydist}/${content_dir}"
+    fi
   done
 done
 popd >/dev/null
-

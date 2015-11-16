@@ -48,6 +48,13 @@ class GCfgLib:
         self.__sAuthor = _sAuthor
         self.__sEmail = _sEmail
         self.__sRoot = _sRoot
+        # ... on *nix system, use 'pwd' as (current) working directory (without symlinks being dereferenced)
+        oPopen = subprocess.Popen('pwd', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (sStdOut, sStdErr) = oPopen.communicate()
+        if (oPopen.returncode==0):
+            self.__sWorkingDirectory = sStdOut.splitlines()[0]
+        else:
+            self.__sWorkingDirectory = os.getcwd()
 
         # Properties (internal)
         self.__bDebug = False
@@ -351,12 +358,12 @@ class GCfgLib:
             if os.path.isfile(_sPath) or not os.path.exists(_sPath):
                 # ... for a (potentially not existing) file
                 return os.path.join(
-                    os.path.realpath(sParent),
+                    os.path.normpath(os.path.join(self.__sWorkingDirectory,sParent)),
                     os.path.basename(_sPath)
                 )
             elif _bAllowDirectory and os.path.isdir(_sPath):
                 # ... for a directory (if allowed)
-                return os.path.realpath(_sPath)
+                return os.path.normpath(os.path.join(self.__sWorkingDirectory,_sPath))
             else:
                 # ... for neither directory nor file
                 raise EnvironmentError(errno.ENOENT, 'Invalid path')

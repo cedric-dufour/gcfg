@@ -89,7 +89,7 @@ class GCfgPkgDiff(GCfgExec):
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
         oGCfgLib.git(
-            ['diff', oGCfgLib.getRepositoryPath('pkglist')]+lUnkownArguments,
+            ['diff', oGCfgLib.getRepositoryPath('pkglist').lstrip(os.sep)]+lUnkownArguments,
              False
         )
         return 0

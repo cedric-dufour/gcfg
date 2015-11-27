@@ -1,3 +1,10 @@
+gcfg (2.0.20151127a~rc3) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX: 'gcfg pkgdiff' failing with 'outside repository' error
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Fri, 27 Nov 2015 17:04:36 +0100
+
 gcfg (2.0.20151116c~rc2) UNRELEASED; urgency=low
 
   * NEW RELEASE

@@ -1302,7 +1302,7 @@ class GCfgLib:
             if os.path.exists(sFileGIT_dst):
                 raise EnvironmentError(errno.EEXIST, 'Destination file exists (please "remove")')
             if not self.isLinked(_sFileActual)[0]:
-                raise EnvironmentError(errno.EAGAIN, 'Inconsistent consiguration repository (please "verify")')
+                raise EnvironmentError(errno.EAGAIN, 'Inconsistent configuration repository (please "verify")')
 
             # Move file
             bMoved = self._move(sFileActual, sFileDestination, _sLink, _bBatch, _bForce)

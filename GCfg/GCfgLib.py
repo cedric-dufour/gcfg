@@ -1626,7 +1626,10 @@ class GCfgLib:
         with open(sFileFlag, 'r') as fFileFlag:
             lFlags = fFileFlag.read().splitlines()
         lFlags = sorted(set(lFlags))
-        lFlags.remove(_sFlag)
+        try:
+            lFlags.remove(_sFlag)
+        except ValueError as e:
+            pass
         if lFlags:
             self._DEBUG('Writing flags file; %s' % sFileFlag)
             with open(sFileFlag, 'w') as fFileFlag:

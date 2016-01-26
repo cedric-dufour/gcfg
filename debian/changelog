@@ -1,3 +1,12 @@
+gcfg (2.0.20160126a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX: Minor typo
+  - FIX: Do not fail on removing (unflag) unexisting flag
+  - FIX: Allow to remove/verify file with unexisting parent directory
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Tue, 26 Jan 2016 13:17:57 +0100
+
 gcfg (2.0.20151127a~rc3) UNRELEASED; urgency=low
 
   * NEW RELEASE

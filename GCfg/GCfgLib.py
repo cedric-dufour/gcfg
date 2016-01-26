@@ -637,6 +637,16 @@ class GCfgLib:
 
             # Paths
             sFileActual = self.getCanonicalPath(_sFileActual)
+
+        except EnvironmentError as e:
+            self._WARNING('%s; %s' % (e.strerror, _sFileActual))
+            self._WARNING('Only option is to remove file')
+            self.remove(_sFileActual, _bBatch, _bForce)
+            return
+
+        try:
+
+            # Paths
             sFileGIT = self._getRepositoryPath('git', sFileActual)
 
             # GIT link
@@ -1315,13 +1325,14 @@ class GCfgLib:
             raise EnvironmentError(e.errno, 'Failed to move file')
 
 
-    def _remove(self, _sFileActual, _bBatch=False, _bForce=False):
+    def _remove(self, _sFileActual, _bBatch=False, _bForce=False, _bRestoreOriginal=True):
         """
         Remove the given file from the configuration respository.
 
-        @param  string  _sFileActual  Actual file (canonical path)
-        @param  bool    _bBatch       Batch mode (no confirmation prompts)
-        @param  bool    _bForce       Forced batch mode
+        @param  string  _sFileActual       Actual file (canonical path)
+        @param  bool    _bBatch            Batch mode (no confirmation prompts)
+        @param  bool    _bForce            Forced batch mode
+        @param  bool    _bRestoreOriginal  Restore original file if existing
 
         @return bool  True if the file was actually removed
         """
@@ -1357,7 +1368,10 @@ class GCfgLib:
         # Restore and remove original file
         self._DEBUG('Restoring original file and removing parent directory; %s' % sFileOriginal)
         if os.path.exists(sFileOriginal):
-            self._mv(sFileOriginal, _sFileActual)
+            if _bRestoreOriginal:
+                self._mv(sFileOriginal, _sFileActual)
+            else:
+                self._rm(sFileOriginal)
         self.rmdir(os.path.dirname(sFileOriginal))
 
         # Done
@@ -1381,7 +1395,14 @@ class GCfgLib:
         try:
 
             # Paths
-            sFileActual = self.getCanonicalPath(_sFileActual)
+            bRestoreOriginal = True
+            try:
+                sFileActual = self.getCanonicalPath(_sFileActual)
+            except EnvironmentError as e:
+                self._WARNING('%s; %s' % (e.strerror, _sFileActual))
+                self._WARNING('Using provided path "as is" (original file will NOT be restored)')
+                sFileActual = _sFileActual
+                bRestoreOriginal = False
             sFileGIT = self._getRepositoryPath('git', sFileActual)
 
             # Check
@@ -1407,7 +1428,7 @@ class GCfgLib:
                         raise EnvironmentError(errno.EPERM, 'Cannot remove @EDITED file (unless forced)')
 
             # Remove file
-            bRemoved = self._remove(sFileActual, _bBatch, _bForce)
+            bRemoved = self._remove(sFileActual, _bBatch, _bForce, bRestoreOriginal)
             if bRemoved:
                 if os.path.exists(sFileActual):
                     self._INFO('Original file successfully restored; %s' % _sFileActual)

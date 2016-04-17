@@ -136,5 +136,5 @@ debian-packages:
 debian-source:
 	debuild -I'.git*' -I'*.pyc' -us -uc -S
 
-release: debian-packages build-install-tarball debian-source build-source-tarball
+release: debian-packages build-install-tarball debian-source build-source-tarball ;
 

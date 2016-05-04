@@ -1905,6 +1905,7 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sPath))
             raise EnvironmentError(e.errno, 'Failed to retrieve/save packages listing file')
 
+
     def _git(self, _sCommand, _lArguments, _bRedirectStdOut=True):
         """
         Execute the given GIT command for the given file.
@@ -1965,6 +1966,7 @@ class GCfgLib:
             self._ERROR(e.strerror)
             raise EnvironmentError(e.errno, 'Failed to execute GIT command')
 
+
     def _a2ps(self, _sFilePostscript, _sFlag=None, _bBatch=False, _bForce=False):
         """
         Create a Postscript document with all (text) files in the configuration repository.
@@ -2015,6 +2017,7 @@ class GCfgLib:
             self._shellCommand(['a2ps', '--medium=A4', '--portrait', '--columns=1', '--borders=on', '--no-header', '--toc', '--left-title=$f', '--right-title=$p./$p#', '--left-footer=%M - %D{%Y.%m.%d}', '--footer=CONFIDENTIAL', '--right-footer=%p./%p#', '--chars-per-line=100', '--file-align=sheet', '--encoding=ISO-8859-1', '--output=%s' % _sFilePostscript] + sorted(lFiles))
         else:
             self._WARNING('Empty files list (Postscript file not created)')
+
 
     def a2ps(self, _sFilePostscript, _sFlag=None, _bBatch=False, _bForce=False):
         """

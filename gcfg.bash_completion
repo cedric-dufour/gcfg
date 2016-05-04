@@ -46,7 +46,7 @@ _gcfg()
   elif [ $COMP_CWORD -eq 3 ]; then
     local prev=${COMP_WORDS[COMP_CWORD-2]}
     case "$prev" in
-      @(copy|cp|move|mv))
+      @(copy|cp|move|mv|git))
         _filedir
       ;;
     esac

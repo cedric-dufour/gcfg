@@ -1917,6 +1917,12 @@ class GCfgLib:
         """
 
         # Arguments
+
+        # ... allow absolute path: strip any leading '/'
+        for iIndex, sArgument in enumerate(_lArguments):
+            _lArguments[iIndex] = sArgument.lstrip('/')
+
+        # ... default commit author
         if _sCommand=='commit':
             if '--author' not in _lArguments:
                 _lArguments += ['--author', '%s <%s>' % (self.__sAuthor, self.__sEmail)]

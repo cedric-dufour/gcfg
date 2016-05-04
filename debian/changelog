@@ -1,8 +1,14 @@
 gcfg (2.0.20160504a) UNRELEASED; urgency=low
 
   * NEW RELEASE
+  - FIX: Minor correction in INSTALL file and debian packaging rules
+  - ADD: Delete '*.pyc' files when cleaning the source tree
+  - ADD: Allow to build RPM package (output untested)
+  - MOD: Allow to specify absolute file path in 'git' command
+  - ADD: File path auto-completion for 'git' commands
+  - FIX[minor]: Added some missing carriage returns
 
- -- Cedric Dufour <cedric.dufour@ced-network.net>  Wed, 04 May 2016 09:43:52 +0200
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Wed, 04 May 2016 12:01:04 +0200
 
 gcfg (2.0.20160126a) UNRELEASED; urgency=low
 

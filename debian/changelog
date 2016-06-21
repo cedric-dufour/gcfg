@@ -1,3 +1,10 @@
+gcfg (2.0.20160621a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - ADD: Add '--force' option to allow setting any fla
+
+ -- Cedric Dufour <cedric.dufour@ced-network.net>  Tue, 21 Jun 2016 09:53:26 +0200
+
 gcfg (2.0.20160504a) UNRELEASED; urgency=low
 
   * NEW RELEASE

@@ -1593,13 +1593,14 @@ class GCfgLib:
             fFileFlag.write('\n'.join(lFlags))
 
 
-    def flag(self, _sFileActual, _sFlag):
+    def flag(self, _sFileActual, _sFlag, _bForce=False):
         """
         Add the given flag to the given file.
         (including validation, informational messages and exceptions handling)
 
         @param  string   _sFileActual  Actual file (path)
         @param  string   _sFlag        File flag
+        @param  bool     _bForce       Forced mode (allow any flag)
         """
 
         try:
@@ -1613,7 +1614,7 @@ class GCfgLib:
                 raise EnvironmentError(errno.ENOENT, 'No such file (in configuration repository)')
 
             # Check flag
-            if any((c not in '_-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890') for c in _sFlag):
+            if not _bForce and any((c not in '_-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890') for c in _sFlag):
                 raise EnvironmentError(errno.EINVAL, 'Invalid flag')
 
             # Add flag

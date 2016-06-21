@@ -61,6 +61,7 @@ class GCfgFlag(GCfgExec):
         )
 
         # Additional arguments
+        self._addOptionForce(self._oArgumentParser)
         self._oArgumentParser.add_argument(
             'file', type=str, metavar='<file>',
             help='file to add the flag to'
@@ -100,6 +101,7 @@ class GCfgFlag(GCfgExec):
         if not oGCfgLib.check(): return errno.EPERM
         oGCfgLib.flag(
             self._oArguments.file,
-            self._oArguments.flag
+            self._oArguments.flag,
+            self._oArguments.force
         )
         return 0

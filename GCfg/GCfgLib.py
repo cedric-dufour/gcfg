@@ -50,9 +50,9 @@ class GCfgLib:
         self.__sRoot = _sRoot
         # ... on *nix system, use 'pwd' as (current) working directory (without symlinks being dereferenced)
         oPopen = subprocess.Popen('pwd', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (sStdOut, sStdErr) = oPopen.communicate()
+        (bStdOut, bStdErr) = oPopen.communicate()
         if (oPopen.returncode==0):
-            self.__sWorkingDirectory = sStdOut.splitlines()[0]
+            self.__sWorkingDirectory = bStdOut.decode(sys.getfilesystemencoding()).splitlines()[0]
         else:
             self.__sWorkingDirectory = os.getcwd()
 

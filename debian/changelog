@@ -1,7 +1,15 @@
+gcfg (2.0.20170502a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - MOD: Do not automatically stage files for commit ('git add')
+         (when GCfg adding/editing/copying new files)
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Tue, 02 May 2017 09:13:18 +0200
+
 gcfg (2.0.20160621a) UNRELEASED; urgency=low
 
   * NEW RELEASE
-  - ADD: Add '--force' option to allow setting any fla
+  - ADD: Add '--force' option to allow setting any flag
 
  -- Cedric Dufour <cedric.dufour@ced-network.net>  Tue, 21 Jun 2016 09:53:26 +0200
 

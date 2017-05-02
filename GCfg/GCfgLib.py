@@ -739,8 +739,6 @@ class GCfgLib:
 
         # Update GIT sub-repository
         self._link(_sFileGIT, _sFileActual, _sLink, _bBatch, _bForce)
-        self._DEBUG('GIT add file; %s' % _sFileGIT)
-        self._gitCommand(['add', _sFileGIT])
 
 
     def saveFileGIT(self, _sFileActual, _sLink=None, _bBatch=False, _bForce=False):

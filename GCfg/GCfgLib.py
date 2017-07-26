@@ -1826,8 +1826,8 @@ class GCfgLib:
             with tempfile.NamedTemporaryFile() as fFileOriginal_tmp:
                 with tempfile.NamedTemporaryFile() as fFileActual_tmp:
                     sCommentRexExp = '^[[:space:]]*(%s|$)' % re.escape(_sCommentPrefix)
-                    fFileOriginal_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, sFileOriginal], None, True, True))
-                    fFileActual_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, _sFileActual], None, True, True))
+                    fFileOriginal_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, sFileOriginal], None, True, True).encode(sys.getfilesystemencoding()))
+                    fFileActual_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, _sFileActual], None, True, True).encode(sys.getfilesystemencoding()))
                     fFileOriginal_tmp.flush()
                     fFileActual_tmp.flush()
                     sDifferences = self._shellCommand(['diff', '-uN', '--label', 'ORIGINAL', '--label', _sFileActual, fFileOriginal_tmp.name, fFileActual_tmp.name], None, _bRedirectStdOut, True)

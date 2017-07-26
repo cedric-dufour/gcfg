@@ -1,8 +1,31 @@
-gcfg (3.0.20151104a~beta) UNRELEASED; urgency=low
+gcfg (3.0.20170726a) UNRELEASED; urgency=low
 
-  * BETA (gcfg_3.x/Python 3.x branch)
+  * NEW MAJOR RELEASE (gcfg_3.x/Python 3.x branch)
+  - NEW: Hail the new GCFG Python 3.x library and utility!
+  - MOD: Python-3.x Debian packaging
+  - MOD: Use Python3-provided stat.filemode()
+  - MOD: Fine-tuned Debian packaging (breaks Debian<Jessie, Ubuntu<Trusty)
+  - FIX: Minor text correction
+  - FIX: Fixed symlinked file creation
+  - FIX: Do not fail when removing files that are (unproperly) untracked in GIT
+  - FIX: Do not dereference symlinks in canonical paths
+  - NEW: Allow to retrieve the original file path
+  - FIX: 'gcfg pkgdiff' failing with 'outside repository' error
+  - FIX: Minor typo
+  - FIX: Do not fail on removing (unflag) unexisting flag
+  - FIX: Allow to remove/verify file with unexisting parent directory
+  - FIX: Minor correction in INSTALL file and debian packaging rules
+  - ADD: Delete '*.pyc' files when cleaning the source tree
+  - ADD: Allow to build RPM package (output untested)
+  - MOD: Allow to specify absolute file path in 'git' command
+  - ADD: File path auto-completion for 'git' commands
+  - FIX[minor]: Added some missing carriage returns
+  - ADD: Add '--force' option to allow setting any flag
+  - FIX: Inconsistent bytes/string handling when detecting current working directory
+  - MOD: Do not automatically stage files for commit ('git add')
+  - FIX: 'gcfg delta' fails when comment pattern is given
 
- -- Cedric Dufour <cedric.dufour@ced-network.net>  Tue,  4 Nov 2015 12:15:54 +0100
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Wed, 26 Jul 2017 19:11:34 +0200
 
 gcfg (2.0.20151103f~rc1) UNRELEASED; urgency=low
 

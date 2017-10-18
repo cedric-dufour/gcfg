@@ -450,11 +450,11 @@ class GCfgLib:
         with open(_sFileGIT, 'rb', 65536) as fFileGIT:
             with open(_sFileActual, 'rb', 65536) as fFileActual:
                 while True:
-                    sReadGIT = fFileGIT.read(65536)
-                    sReadActual = fFileActual.read(65536)
-                    if not sReadGIT==sReadActual:
+                    byReadGIT = fFileGIT.read(65536)
+                    byReadActual = fFileActual.read(65536)
+                    if not byReadGIT==byReadActual:
                         return (False, 'copy')
-                    if sReadGIT=='':
+                    if byReadGIT==b'':
                         return (True, 'copy')
 
 

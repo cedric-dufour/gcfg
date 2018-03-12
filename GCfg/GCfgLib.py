@@ -1869,7 +1869,7 @@ class GCfgLib:
         """
 
         # Execute shell command
-        lCommand = ['aptitude', 'search', '--disable-columns', '--display-format', '%p', '--sort', 'name', '?and(?installed,?not(?automatic))']
+        lCommand = ['apt-mark', 'showmanual']
         sStdOut = self._shellCommand(lCommand)
 
         # Save packages listing file

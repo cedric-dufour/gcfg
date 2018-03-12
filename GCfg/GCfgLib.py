@@ -2008,6 +2008,8 @@ class GCfgLib:
             lFiles += [sFile]
 
         # Execute A2PS command
+        # BUG: a2ps does NOT support UTF-8 (input) encoding, though that is what we're most likely to need
+        #      => let's keep using ISO-8859-1 instead (sorry for the conversion artefacts)
         if lFiles:
             self._DEBUG('Creating Postscript file; %s' % _sFilePostscript)
             self._shellCommand(['a2ps', '--medium=A4', '--portrait', '--columns=1', '--borders=on', '--no-header', '--toc', '--left-title=$f', '--right-title=$p./$p#', '--left-footer=%M - %D{%Y.%m.%d}', '--footer=CONFIDENTIAL', '--right-footer=%p./%p#', '--chars-per-line=100', '--file-align=sheet', '--encoding=ISO-8859-1', '--output=%s' % _sFilePostscript] + sorted(lFiles))

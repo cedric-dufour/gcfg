@@ -52,7 +52,7 @@ class GCfgLib:
         oPopen = subprocess.Popen('pwd', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (bStdOut, bStdErr) = oPopen.communicate()
         if (oPopen.returncode==0):
-            self.__sWorkingDirectory = bStdOut.decode(sys.getfilesystemencoding()).splitlines()[0]
+            self.__sWorkingDirectory = bStdOut.decode(sys.stdout.encoding).splitlines()[0]
         else:
             self.__sWorkingDirectory = os.getcwd()
 
@@ -325,9 +325,9 @@ class GCfgLib:
             )
         (bStdOut, bStdErr) = oPopen.communicate()
         if not _bIgnoreReturnCode and oPopen.returncode!=0:
-            raise EnvironmentError(oPopen.returncode, bStdErr.decode(sys.getfilesystemencoding()))
+            raise EnvironmentError(oPopen.returncode, bStdErr.decode(sys.stderr.encoding))
         if bStdOut is not None:
-            return bStdOut.decode(sys.getfilesystemencoding())
+            return bStdOut.decode(sys.stdout.encoding)
         else:
             return None
 
@@ -1820,8 +1820,8 @@ class GCfgLib:
             with tempfile.NamedTemporaryFile() as fFileOriginal_tmp:
                 with tempfile.NamedTemporaryFile() as fFileActual_tmp:
                     sCommentRexExp = '^[[:space:]]*(%s|$)' % re.escape(_sCommentPrefix)
-                    fFileOriginal_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, sFileOriginal], None, True, True).encode(sys.getfilesystemencoding()))
-                    fFileActual_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, _sFileActual], None, True, True).encode(sys.getfilesystemencoding()))
+                    fFileOriginal_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, sFileOriginal], None, True, True).encode(sys.stdout.encoding))
+                    fFileActual_tmp.write(self._shellCommand(['grep', '-Ev', sCommentRexExp, _sFileActual], None, True, True).encode(sys.stdout.encoding))
                     fFileOriginal_tmp.flush()
                     fFileActual_tmp.flush()
                     sDifferences = self._shellCommand(['diff', '-uN', '--label', 'ORIGINAL', '--label', _sFileActual, fFileOriginal_tmp.name, fFileActual_tmp.name], None, _bRedirectStdOut, True)
@@ -1991,9 +1991,9 @@ class GCfgLib:
         oPopen.stdout.close()
         (bStdOut, bStdErr) = oPopen_sub.communicate()
         if oPopen_sub.returncode!=0:
-            raise EnvironmentError(oPopen_sub.returncode, bStdErr.decode(sys.getfilesystemencoding()))
+            raise EnvironmentError(oPopen_sub.returncode, bStdErr.decode(sys.stderr.encoding))
         dlFiles = {}
-        for sLine in bStdOut.decode(sys.getfilesystemencoding()).splitlines():
+        for sLine in bStdOut.decode(sys.stdout.encoding).splitlines():
             iSeparator = sLine.rfind(':')
             dlFiles[sLine[:iSeparator].lstrip('.')] = sLine[iSeparator+1:].strip()
 

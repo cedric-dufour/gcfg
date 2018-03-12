@@ -5,7 +5,7 @@ Maintainer: Cedric Dufour <cedric.dufour@ced-network.net>
 Build-Depends: python3 (>= 3.4), debhelper (>= 8), dh-python, bash, help2man
 X-Python3-Version: >= 3.4
 Homepage: https://github.com/cedric-dufour/gcfg
-Standards-Version: 3.9.4
+Standards-Version: 4.1.3
 
 Package: gcfg
 Architecture: all

@@ -1,3 +1,13 @@
+gcfg (3.0.20180312a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX: Use appropriate stdout/stderr encoding
+  - BUG: 'a2ps' does NOT support UTF-8 (input) encoding (can't fix)
+  - MOD: use 'apt-mark' instead of 'aptitude' for 'gcfg pkg*' commands
+         (and switch the packaging dependency from 'aptitude' to 'apt')
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Mon, 12 Mar 2018 12:16:57 +0100
+
 gcfg (3.0.20171019a) UNRELEASED; urgency=low
 
   * NEW RELEASE

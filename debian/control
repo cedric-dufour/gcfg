@@ -68,5 +68,5 @@ Description: GIT-based Configuration Tracking Utility (GCFG)
 
 Package: gcfg-python3
 Architecture: all
-Depends: python3 (>= 3.4), git-core, apt
+Depends: python3 (>= 3.4), ${python3:Depends}, git-core, apt
 Description: GIT-based Configuration Tracking Utility (GCFG) - Python 3.x library

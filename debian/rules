@@ -24,12 +24,15 @@ override_dh_install:
 
 	# Install additional stuff
 	mkdir -p debian/tmp/usr/bin
-	cp gcfg gsed debian/tmp/usr/bin/.
+	cp gcfg gcfg.sed debian/tmp/usr/bin/.
 	mkdir -p debian/tmp/usr/share/$(PACKAGE)
 	cp gcfg.config debian/tmp/usr/share/$(PACKAGE)/.
 	ln -s /usr/share/$(PACKAGE)/gcfg.config debian/tmp/usr/bin/gcfg.config
 	mkdir -p debian/tmp/etc/bash_completion.d
 	cp gcfg.bash_completion debian/tmp/etc/bash_completion.d/gcfg
+	# ... temporary quirk
+	mkdir -p debian/tmp/usr/sbin
+	ln -s /usr/bin/gcfg.sed debian/tmp/usr/sbin/gsed
 
 	# Create man pages
 	mkdir -p debian/tmp/usr/share/man/man1

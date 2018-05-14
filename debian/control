@@ -68,7 +68,7 @@ Description: GIT-based Configuration Tracking Utility (GCFG)
 
 Package: gcfg-pyshared
 Architecture: all
-Depends: python (>= 2.6), python (<< 3), python-argparse, git-core, aptitude
+Depends: python (>= 2.6), python (<< 3), ${python:Depends}, python-argparse, git-core, aptitude
 Description: GIT-based Configuration Tracking Utility (GCFG) - Python 2.x library
 
 Package: gcfg-python2.6

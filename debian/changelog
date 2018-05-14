@@ -1,3 +1,14 @@
+gcfg (3.0.20180514a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - MOD: Removed (long-no-longer-needed) 'gcfg.migrate' script
+  - FIX: Renamed '/usr/bin/gsed' script to '/usr/bin/gcfg.sed'
+         (prevent name conflict in OSX interoperable scripts)
+  <-> QUIRK (temporary): Symlinked 'gcfg.sed' to '/usr/sbin/gsed'
+         (all dependencies MUST be updated ASAP!)
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Mon, 14 May 2018 12:20:24 +0200
+
 gcfg (3.0.20180420a) UNRELEASED; urgency=low
 
   * NEW RELEASE

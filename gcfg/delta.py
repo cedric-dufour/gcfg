@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgMove(GCfgExec):
+class GCfgDelta(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'move'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'delta'
     """
 
     #------------------------------------------------------------------------------
@@ -50,27 +50,23 @@ class GCfgMove(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Move the given file to the given destination file,
-                  updating the configuration repository accordingly.
+                  Show the differences between the given  file and its original content.
             ''')
         )
 
         # Additional arguments
-        self._addOptionBatch(self._oArgumentParser)
-        self._addOptionForce(self._oArgumentParser)
-        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'source', type=str, metavar='<source-file>',
-            help='source file'
+            'file', type=str, metavar='<file>',
+            help='file to show the differences for'
         )
         self._oArgumentParser.add_argument(
-            'destination', type=str, metavar='<destination-file>',
-            help='destination file'
+            'commentPrefix', type=str, metavar='<comment-prefix>', nargs='?',
+            help='comment prefix (used to stripped commented lines out of the result)'
         )
 
 
@@ -101,11 +97,9 @@ class GCfgMove(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.move(
-            self._oArguments.source,
-            self._oArguments.destination,
-            self._oArguments.link,
-            self._oArguments.batch,
-            self._oArguments.force
+        oGCfgLib.delta(
+            self._oArguments.file,
+            self._oArguments.commentPrefix,
+            False
         )
         return 0

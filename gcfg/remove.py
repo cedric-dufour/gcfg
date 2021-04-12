@@ -19,15 +19,12 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
-import grp
 import errno
 import os
-import pwd
-import stat
 import sys
 import textwrap
 
@@ -36,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgPermissions(GCfgExec):
+class GCfgRemove(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'permissions'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'remove'
     """
 
     #------------------------------------------------------------------------------
@@ -53,34 +50,27 @@ class GCfgPermissions(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Show or change the permissions of the given file.
+                  Remove the given file from the configuration repository.
             ''')
         )
 
         # Additional arguments
+        self._addOptionBatch(self._oArgumentParser)
+        self._addOptionForce(self._oArgumentParser)
         self._oArgumentParser.add_argument(
             'file', type=str, metavar='<file>',
-            help='file to show/change the permissions of'
-        )
-        self._oArgumentParser.add_argument(
-            'mode', type=str, metavar='<mode>', nargs='?',
-            help='file mode (chmod-like) to set'
-        )
-        self._oArgumentParser.add_argument(
-            'owner', type=str, metavar='<owner>', nargs='?',
-            help='file owner (chown-like) to set'
+            help='file to remove'
         )
 
 
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
-
 
     #
     # Main
@@ -105,16 +95,9 @@ class GCfgPermissions(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        (iMode, iUID, iGID) = oGCfgLib.permissions(
+        oGCfgLib.remove(
             self._oArguments.file,
-            self._oArguments.mode,
-            self._oArguments.owner
-        )
-        sys.stdout.write('%s/%s %s:%s %s\n' % (
-            oct(iMode)[-4:], stat.filemode(iMode),
-            pwd.getpwuid(iUID)[0],
-            grp.getgrgid(iGID)[0],
-            self._oArguments.file
-            )
+            self._oArguments.batch,
+            self._oArguments.force
         )
         return 0

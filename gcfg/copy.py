@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgList(GCfgExec):
+class GCfgCopy(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'list'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'copy'
     """
 
     #------------------------------------------------------------------------------
@@ -50,19 +50,27 @@ class GCfgList(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  List the files in the configuration repository
+                  Copy the given source file to the given destination file,
+                  which will also be added configuration repository.
             ''')
         )
 
         # Additional arguments
+        self._addOptionBatch(self._oArgumentParser)
+        self._addOptionForce(self._oArgumentParser)
+        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>', nargs='?',
-            help='flag to match when listing files (or @FLAGS to see all flags)'
+            'file', type=str, metavar='<file>',
+            help='destination file (also added to the configuration repository)'
+        )
+        self._oArgumentParser.add_argument(
+            'source', type=str, metavar='<source-file>',
+            help='source file'
         )
 
 
@@ -91,12 +99,13 @@ class GCfgList(GCfgExec):
         # Handle command
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
+        oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        dlFiles = oGCfgLib.list(self._oArguments.flag)
-        for sFile in sorted(dlFiles):
-            lFlags = dlFiles[sFile]
-            if lFlags is not None:
-                sys.stdout.write('%s:%s\n' % (sFile, ','.join(lFlags)))
-            else:
-                sys.stdout.write('%s\n' % sFile)
+        oGCfgLib.copy(
+            self._oArguments.file,
+            self._oArguments.source,
+            self._oArguments.link,
+            self._oArguments.batch,
+            self._oArguments.force
+        )
         return 0

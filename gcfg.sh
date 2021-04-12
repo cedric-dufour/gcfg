@@ -10,4 +10,4 @@ fi
 
 
 ## Delegate execution to our python sibling
-exec "$(dirname $0)/gcfg.py" "$@"
+exec "$(dirname $0)/gcfg-py" "$@"

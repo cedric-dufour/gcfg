@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgFlag(GCfgExec):
+class GCfgMove(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'flag'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'move'
     """
 
     #------------------------------------------------------------------------------
@@ -50,25 +50,27 @@ class GCfgFlag(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Add the given flag to the given file.
-                  The flag must consist of alpha-numeric characters, underscores or hyphens.
+                  Move the given file to the given destination file,
+                  updating the configuration repository accordingly.
             ''')
         )
 
         # Additional arguments
+        self._addOptionBatch(self._oArgumentParser)
         self._addOptionForce(self._oArgumentParser)
+        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to add the flag to'
+            'source', type=str, metavar='<source-file>',
+            help='source file'
         )
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>',
-            help='alpha-numeric flag'
+            'destination', type=str, metavar='<destination-file>',
+            help='destination file'
         )
 
 
@@ -99,9 +101,11 @@ class GCfgFlag(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.flag(
-            self._oArguments.file,
-            self._oArguments.flag,
+        oGCfgLib.move(
+            self._oArguments.source,
+            self._oArguments.destination,
+            self._oArguments.link,
+            self._oArguments.batch,
             self._oArguments.force
         )
         return 0

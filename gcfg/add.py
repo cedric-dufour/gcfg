@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgUnflag(GCfgExec):
+class GCfgAdd(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'unflag'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'add'
     """
 
     #------------------------------------------------------------------------------
@@ -50,23 +50,26 @@ class GCfgUnflag(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Remove the given flag from the given file.
+                  Add the given file to the configuration repository.
             ''')
         )
 
         # Additional arguments
+        self._addOptionBatch(self._oArgumentParser)
+        self._addOptionForce(self._oArgumentParser)
+        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
             'file', type=str, metavar='<file>',
-            help='file to remove the flag from'
+            help='file to add to the configuration repository'
         )
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>',
-            help='alpha-numeric flag'
+            'original', type=str, metavar='<original-file>', nargs='?',
+            help='alternate original file to add to the configuration repository'
         )
 
 
@@ -97,8 +100,11 @@ class GCfgUnflag(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.unflag(
+        oGCfgLib.add(
             self._oArguments.file,
-            self._oArguments.flag
+            self._oArguments.original,
+            self._oArguments.link,
+            self._oArguments.batch,
+            self._oArguments.force
         )
         return 0

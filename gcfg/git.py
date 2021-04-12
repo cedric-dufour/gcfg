@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,35 +33,10 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgInit(GCfgExec):
+class GCfgGit(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'init'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'git'
     """
-
-    #------------------------------------------------------------------------------
-    # CONSTRUCTORS / DESTRUCTOR
-    #------------------------------------------------------------------------------
-
-    def _initArgumentParser(self, _sCommand=None):
-        """
-        Creates the arguments parser (and help generator)
-
-        @param  string  _sCommand  Command name
-        """
-
-        # Parent
-        GCfgExec._initArgumentParser(
-            self,
-            _sCommand,
-            textwrap.dedent('''
-                synopsis:
-                  Initializes the configuration repository.
-            ''')
-        )
-
-        # Additional arguments
-        self._addOptionBatch(self._oArgumentParser)
-
 
     #------------------------------------------------------------------------------
     # METHODS
@@ -81,13 +56,11 @@ class GCfgInit(GCfgExec):
         @return integer  Exit code; non-zero in case of failure
         """
 
-        # Arguments
-        self._initArgumentParser(_sCommand)
-        self._initArguments(_lArguments)
-
         # Handle command
         oGCfgLib = self._getLibrary()
-        oGCfgLib.setDebug(self._oArguments.debug)
-        oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(True, self._oArguments.batch): return errno.EPERM
+        if not oGCfgLib.check(): return errno.EPERM
+        oGCfgLib.git(
+            _lArguments,
+            False
+        )
         return 0

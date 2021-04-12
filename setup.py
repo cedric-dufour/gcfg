@@ -72,7 +72,7 @@ to GIT.
     license = 'GPL-3',
     url = 'https://github.com/cedric-dufour/gcfg',
     download_url = 'https://github.com/cedric-dufour/gcfg',
-    packages = [ 'GCfg' ],
+    packages = [ 'gcfg' ],
     requires = [ 'argparse' ],
-    scripts = [ 'gcfg.py' ],
+    scripts = [ 'gcfg-py' ],
     )

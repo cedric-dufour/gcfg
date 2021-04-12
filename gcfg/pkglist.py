@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgPkgDiff(GCfgExec):
+class GCfgPkgList(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'pkgdiff'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'pkglist'
     """
 
     #------------------------------------------------------------------------------
@@ -50,13 +50,12 @@ class GCfgPkgDiff(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  GIT-diff the list of (manually) installed packages.
-                  Additional (unlisted) options will be passed to GIT.
+                  Show the list of (manually) installed packages.
             ''')
         )
 
@@ -81,15 +80,12 @@ class GCfgPkgDiff(GCfgExec):
 
         # Arguments
         self._initArgumentParser(_sCommand)
-        lUnkownArguments = self._initArguments(_lArguments, True)
+        self._initArguments(_lArguments)
 
         # Handle command
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.git(
-            ['diff', oGCfgLib.getRepositoryPath('pkglist').lstrip(os.sep)]+lUnkownArguments,
-             False
-        )
+        sys.stdout.write(oGCfgLib.pkglist())
         return 0

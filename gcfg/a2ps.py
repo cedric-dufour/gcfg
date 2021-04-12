@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgPkgList(GCfgExec):
+class GCfgA2ps(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'pkglist'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'a2ps'
     """
 
     #------------------------------------------------------------------------------
@@ -50,13 +50,26 @@ class GCfgPkgList(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Show the list of (manually) installed packages.
+                  Create a Postscript document with all files in the configuration repository.
+                  If a flag is specified, only matching files will be included.
             ''')
+        )
+
+        # Additional arguments
+        self._addOptionBatch(self._oArgumentParser)
+        self._addOptionForce(self._oArgumentParser)
+        self._oArgumentParser.add_argument(
+            'file', type=str, metavar='<postscript-file>',
+            help='file to save the Postscript output to'
+        )
+        self._oArgumentParser.add_argument(
+            'flag', type=str, metavar='<flag>', nargs='?',
+            help='flag to match when including files'
         )
 
 
@@ -87,5 +100,10 @@ class GCfgPkgList(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        sys.stdout.write(oGCfgLib.pkglist())
+        oGCfgLib.a2ps(
+            self._oArguments.file,
+            self._oArguments.flag,
+            self._oArguments.batch,
+            self._oArguments.force
+        )
         return 0

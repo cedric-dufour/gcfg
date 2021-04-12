@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgRemove(GCfgExec):
+class GCfgPkgDiff(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'remove'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'pkgdiff'
     """
 
     #------------------------------------------------------------------------------
@@ -50,21 +50,14 @@ class GCfgRemove(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Remove the given file from the configuration repository.
+                  GIT-diff the list of (manually) installed packages.
+                  Additional (unlisted) options will be passed to GIT.
             ''')
-        )
-
-        # Additional arguments
-        self._addOptionBatch(self._oArgumentParser)
-        self._addOptionForce(self._oArgumentParser)
-        self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to remove'
         )
 
 
@@ -88,16 +81,15 @@ class GCfgRemove(GCfgExec):
 
         # Arguments
         self._initArgumentParser(_sCommand)
-        self._initArguments(_lArguments)
+        lUnkownArguments = self._initArguments(_lArguments, True)
 
         # Handle command
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.remove(
-            self._oArguments.file,
-            self._oArguments.batch,
-            self._oArguments.force
+        oGCfgLib.git(
+            ['diff', oGCfgLib.getRepositoryPath('pkglist').lstrip(os.sep)]+lUnkownArguments,
+             False
         )
         return 0

@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgVerify(GCfgExec):
+class GCfgList(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'verify'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'list'
     """
 
     #------------------------------------------------------------------------------
@@ -50,22 +50,19 @@ class GCfgVerify(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Verify the consistency of the configuration repository (links)
+                  List the files in the configuration repository
             ''')
         )
 
         # Additional arguments
-        self._addOptionBatch(self._oArgumentParser)
-        self._addOptionForce(self._oArgumentParser)
-        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>', nargs='?',
-            help='specific file to verify (or force to change link type)'
+            'flag', type=str, metavar='<flag>', nargs='?',
+            help='flag to match when listing files (or @FLAGS to see all flags)'
         )
 
 
@@ -94,12 +91,12 @@ class GCfgVerify(GCfgExec):
         # Handle command
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
-        oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.verify(
-            self._oArguments.file,
-            self._oArguments.link,
-            self._oArguments.batch,
-            self._oArguments.force
-        )
+        dlFiles = oGCfgLib.list(self._oArguments.flag)
+        for sFile in sorted(dlFiles):
+            lFlags = dlFiles[sFile]
+            if lFlags is not None:
+                sys.stdout.write('%s:%s\n' % (sFile, ','.join(lFlags)))
+            else:
+                sys.stdout.write('%s\n' % sFile)
         return 0

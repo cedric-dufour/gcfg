@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,10 +33,42 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgGit(GCfgExec):
+class GCfgUnflag(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'git'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'unflag'
     """
+
+    #------------------------------------------------------------------------------
+    # CONSTRUCTORS / DESTRUCTOR
+    #------------------------------------------------------------------------------
+
+    def _initArgumentParser(self, _sCommand=None):
+        """
+        Creates the arguments parser (and help generator)
+
+        @param  string  _sCommand  Command name
+        """
+
+        # Parent
+        GCfgBin._initArgumentParser(
+            self,
+            _sCommand,
+            textwrap.dedent('''
+                synopsis:
+                  Remove the given flag from the given file.
+            ''')
+        )
+
+        # Additional arguments
+        self._oArgumentParser.add_argument(
+            'file', type=str, metavar='<file>',
+            help='file to remove the flag from'
+        )
+        self._oArgumentParser.add_argument(
+            'flag', type=str, metavar='<flag>',
+            help='alpha-numeric flag'
+        )
+
 
     #------------------------------------------------------------------------------
     # METHODS
@@ -56,11 +88,17 @@ class GCfgGit(GCfgExec):
         @return integer  Exit code; non-zero in case of failure
         """
 
+        # Arguments
+        self._initArgumentParser(_sCommand)
+        self._initArguments(_lArguments)
+
         # Handle command
         oGCfgLib = self._getLibrary()
+        oGCfgLib.setDebug(self._oArguments.debug)
+        oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.git(
-            _lArguments,
-            False
+        oGCfgLib.unflag(
+            self._oArguments.file,
+            self._oArguments.flag
         )
         return 0

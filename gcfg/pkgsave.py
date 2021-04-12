@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgCopy(GCfgExec):
+class GCfgPkgSave(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'copy'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'pkgsave'
     """
 
     #------------------------------------------------------------------------------
@@ -50,27 +50,13 @@ class GCfgCopy(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Copy the given source file to the given destination file,
-                  which will also be added configuration repository.
+                  Save the list of (manually) installed packages.
             ''')
-        )
-
-        # Additional arguments
-        self._addOptionBatch(self._oArgumentParser)
-        self._addOptionForce(self._oArgumentParser)
-        self._addOptionLink(self._oArgumentParser)
-        self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='destination file (also added to the configuration repository)'
-        )
-        self._oArgumentParser.add_argument(
-            'source', type=str, metavar='<source-file>',
-            help='source file'
         )
 
 
@@ -101,11 +87,5 @@ class GCfgCopy(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.copy(
-            self._oArguments.file,
-            self._oArguments.source,
-            self._oArguments.link,
-            self._oArguments.batch,
-            self._oArguments.force
-        )
+        oGCfgLib.pkglist(oGCfgLib.getRepositoryPath('pkglist'))
         return 0

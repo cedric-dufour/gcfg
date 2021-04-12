@@ -19,12 +19,15 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
+import grp
 import errno
 import os
+import pwd
+import stat
 import sys
 import textwrap
 
@@ -33,9 +36,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgDelta(GCfgExec):
+class GCfgPermissions(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'delta'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'permissions'
     """
 
     #------------------------------------------------------------------------------
@@ -50,29 +53,34 @@ class GCfgDelta(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Show the differences between the given  file and its original content.
+                  Show or change the permissions of the given file.
             ''')
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
             'file', type=str, metavar='<file>',
-            help='file to show the differences for'
+            help='file to show/change the permissions of'
         )
         self._oArgumentParser.add_argument(
-            'commentPrefix', type=str, metavar='<comment-prefix>', nargs='?',
-            help='comment prefix (used to stripped commented lines out of the result)'
+            'mode', type=str, metavar='<mode>', nargs='?',
+            help='file mode (chmod-like) to set'
+        )
+        self._oArgumentParser.add_argument(
+            'owner', type=str, metavar='<owner>', nargs='?',
+            help='file owner (chown-like) to set'
         )
 
 
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
+
 
     #
     # Main
@@ -97,9 +105,16 @@ class GCfgDelta(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.delta(
+        (iMode, iUID, iGID) = oGCfgLib.permissions(
             self._oArguments.file,
-            self._oArguments.commentPrefix,
-            False
+            self._oArguments.mode,
+            self._oArguments.owner
+        )
+        sys.stdout.write('%s/%s %s:%s %s\n' % (
+            oct(iMode)[-4:], stat.filemode(iMode),
+            pwd.getpwuid(iUID)[0],
+            grp.getgrgid(iGID)[0],
+            self._oArguments.file
+            )
         )
         return 0

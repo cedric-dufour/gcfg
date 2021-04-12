@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgPkgSave(GCfgExec):
+class GCfgEdit(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'pkgsave'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'edit'
     """
 
     #------------------------------------------------------------------------------
@@ -50,13 +50,21 @@ class GCfgPkgSave(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Save the list of (manually) installed packages.
+                  Edit the given file (after adding it to the configuration repository).
+                  The file will be flagged as '@EDITED' if modified.
             ''')
+        )
+
+        # Additional arguments
+        self._addOptionLink(self._oArgumentParser)
+        self._oArgumentParser.add_argument(
+            'file', type=str, metavar='<file>',
+            help='file to edit (and add to the configuration repository)'
         )
 
 
@@ -87,5 +95,8 @@ class GCfgPkgSave(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.pkglist(oGCfgLib.getRepositoryPath('pkglist'))
+        oGCfgLib.edit(
+            self._oArguments.file,
+            self._oArguments.link
+        )
         return 0

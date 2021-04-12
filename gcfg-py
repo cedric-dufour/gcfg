@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- mode:python; tab-width:4; c-basic-offset:4; intent-tabs-mode:nil; -*-
 # ex: filetype=python tabstop=4 softtabstop=4 shiftwidth=4 expandtab autoindent smartindent
 
@@ -17,9 +18,14 @@
 # See the GNU General Public License for more details.
 #
 
-# Constants
-GCFG_VERSION = '%{VERSION}'
+# Modules
+from gcfg import GCfgBin
+import sys
 
-# Dependencies
-from .GCfgLib import GCfgLib
-from .GCfgExec import GCfgExec
+# Excutes
+try:
+    sys.exit(GCfgBin().execute())
+except EnvironmentError as e:
+    sys.exit(e.errno)
+except KeyboardInterrupt as e:
+    sys.exit(-2)

@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgOriginal(GCfgExec):
+class GCfgFlagged(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'original'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'flagged'
     """
 
     #------------------------------------------------------------------------------
@@ -50,23 +50,23 @@ class GCfgOriginal(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Show the original content of the given file.
+                  Check flag or retrieve flags list for the given file.
             ''')
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            '-P', '--path', action='store_true',
-            help='return the original file content path'
+            'file', type=str, metavar='<file>',
+            help='file to check/retrieve flags for'
         )
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to show original content from'
+            'flag', type=str, metavar='<flag>', nargs='?',
+            help='alpha-numeric flag'
         )
 
 
@@ -97,6 +97,13 @@ class GCfgOriginal(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        sys.stdout.write(oGCfgLib.original(self._oArguments.file, self._oArguments.path))
-        if (self._oArguments.path): sys.stdout.write('\n')
+        mResult = oGCfgLib.flagged(
+            self._oArguments.file,
+            self._oArguments.flag
+        )
+        if mResult==False:
+            return errno.EINVAL
+        elif mResult==True:
+            return 0
+        sys.stdout.write('%s\n' % '\n'.join(mResult))
         return 0

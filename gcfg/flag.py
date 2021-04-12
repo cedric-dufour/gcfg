@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgEdit(GCfgExec):
+class GCfgFlag(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'edit'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'flag'
     """
 
     #------------------------------------------------------------------------------
@@ -50,21 +50,25 @@ class GCfgEdit(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Edit the given file (after adding it to the configuration repository).
-                  The file will be flagged as '@EDITED' if modified.
+                  Add the given flag to the given file.
+                  The flag must consist of alpha-numeric characters, underscores or hyphens.
             ''')
         )
 
         # Additional arguments
-        self._addOptionLink(self._oArgumentParser)
+        self._addOptionForce(self._oArgumentParser)
         self._oArgumentParser.add_argument(
             'file', type=str, metavar='<file>',
-            help='file to edit (and add to the configuration repository)'
+            help='file to add the flag to'
+        )
+        self._oArgumentParser.add_argument(
+            'flag', type=str, metavar='<flag>',
+            help='alpha-numeric flag'
         )
 
 
@@ -95,8 +99,9 @@ class GCfgEdit(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.edit(
+        oGCfgLib.flag(
             self._oArguments.file,
-            self._oArguments.link
+            self._oArguments.flag,
+            self._oArguments.force
         )
         return 0

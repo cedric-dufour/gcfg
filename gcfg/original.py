@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgAdd(GCfgExec):
+class GCfgOriginal(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'add'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'original'
     """
 
     #------------------------------------------------------------------------------
@@ -50,26 +50,23 @@ class GCfgAdd(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Add the given file to the configuration repository.
+                  Show the original content of the given file.
             ''')
         )
 
         # Additional arguments
-        self._addOptionBatch(self._oArgumentParser)
-        self._addOptionForce(self._oArgumentParser)
-        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to add to the configuration repository'
+            '-P', '--path', action='store_true',
+            help='return the original file content path'
         )
         self._oArgumentParser.add_argument(
-            'original', type=str, metavar='<original-file>', nargs='?',
-            help='alternate original file to add to the configuration repository'
+            'file', type=str, metavar='<file>',
+            help='file to show original content from'
         )
 
 
@@ -100,11 +97,6 @@ class GCfgAdd(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.add(
-            self._oArguments.file,
-            self._oArguments.original,
-            self._oArguments.link,
-            self._oArguments.batch,
-            self._oArguments.force
-        )
+        sys.stdout.write(oGCfgLib.original(self._oArguments.file, self._oArguments.path))
+        if (self._oArguments.path): sys.stdout.write('\n')
         return 0

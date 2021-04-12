@@ -19,7 +19,7 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
     GCfgLib
 import argparse
@@ -66,7 +66,7 @@ GCFG_COMMANDS = {
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgExec:
+class GCfgBin:
     """
     GIT-based Configuration Tracking Utility (GCFG) - Command wrapper
     """
@@ -289,7 +289,7 @@ class GCfgExec:
 
             # Instantiate command
             cCommand = GCFG_COMMANDS[sCommand]
-            oCommand = getattr(__import__('GCfg.%s' % cCommand, fromlist=['GCfg']), cCommand)
+            oCommand = getattr(__import__('gcfg.%s' % sCommand, fromlist=['gcfg']), cCommand)
 
         except (IndexError, KeyError) as e:
             sys.stdout.write('usage: gcfg <command>\n')

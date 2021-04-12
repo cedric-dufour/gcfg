@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgA2ps(GCfgExec):
+class GCfgInit(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'a2ps'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'init'
     """
 
     #------------------------------------------------------------------------------
@@ -50,27 +50,17 @@ class GCfgA2ps(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Create a Postscript document with all files in the configuration repository.
-                  If a flag is specified, only matching files will be included.
+                  Initializes the configuration repository.
             ''')
         )
 
         # Additional arguments
         self._addOptionBatch(self._oArgumentParser)
-        self._addOptionForce(self._oArgumentParser)
-        self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<postscript-file>',
-            help='file to save the Postscript output to'
-        )
-        self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>', nargs='?',
-            help='flag to match when including files'
-        )
 
 
     #------------------------------------------------------------------------------
@@ -99,11 +89,5 @@ class GCfgA2ps(GCfgExec):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
-        oGCfgLib.a2ps(
-            self._oArguments.file,
-            self._oArguments.flag,
-            self._oArguments.batch,
-            self._oArguments.force
-        )
+        if not oGCfgLib.check(True, self._oArguments.batch): return errno.EPERM
         return 0

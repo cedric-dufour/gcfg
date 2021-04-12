@@ -19,9 +19,9 @@
 
 # Modules
 # ... deb: python-argparse
-from GCfg import \
+from gcfg import \
     GCFG_VERSION, \
-    GCfgExec
+    GCfgBin
 import argparse
 import errno
 import os
@@ -33,9 +33,9 @@ import textwrap
 # CLASSES
 #------------------------------------------------------------------------------
 
-class GCfgFlagged(GCfgExec):
+class GCfgVerify(GCfgBin):
     """
-    GIT-based Configuration Tracking Utility (GCFG) - Command 'flagged'
+    GIT-based Configuration Tracking Utility (GCFG) - Command 'verify'
     """
 
     #------------------------------------------------------------------------------
@@ -50,23 +50,22 @@ class GCfgFlagged(GCfgExec):
         """
 
         # Parent
-        GCfgExec._initArgumentParser(
+        GCfgBin._initArgumentParser(
             self,
             _sCommand,
             textwrap.dedent('''
                 synopsis:
-                  Check flag or retrieve flags list for the given file.
+                  Verify the consistency of the configuration repository (links)
             ''')
         )
 
         # Additional arguments
+        self._addOptionBatch(self._oArgumentParser)
+        self._addOptionForce(self._oArgumentParser)
+        self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to check/retrieve flags for'
-        )
-        self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>', nargs='?',
-            help='alpha-numeric flag'
+            'file', type=str, metavar='<file>', nargs='?',
+            help='specific file to verify (or force to change link type)'
         )
 
 
@@ -97,13 +96,10 @@ class GCfgFlagged(GCfgExec):
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check(): return errno.EPERM
-        mResult = oGCfgLib.flagged(
+        oGCfgLib.verify(
             self._oArguments.file,
-            self._oArguments.flag
+            self._oArguments.link,
+            self._oArguments.batch,
+            self._oArguments.force
         )
-        if mResult==False:
-            return errno.EINVAL
-        elif mResult==True:
-            return 0
-        sys.stdout.write('%s\n' % '\n'.join(mResult))
         return 0

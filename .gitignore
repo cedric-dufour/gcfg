@@ -3,3 +3,22 @@
 *~
 semantic.cache
 
+# Python artefacts
+__pycache__
+build
+.eggs
+.pybuild
+
+# Debian artefacts
+*.deb
+*.buildinfo
+*.changes
+**/debian/debhelper-build-stamp
+**/debian/files
+**/debian/*.debhelper
+**/debian/*.debhelper.log
+**/debian/*.substvars
+# (packaging folders)
+**/debian/tmp
+debian/gcfg
+debian/gcfg-python3

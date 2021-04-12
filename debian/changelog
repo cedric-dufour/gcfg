@@ -1,3 +1,14 @@
+gcfg (3.0.20210412a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - DEV: Switch all file names to lowercase
+  - DEV: Hail flake8!
+  - DEV: Python prefers double-quotes
+  - DEV: Hail Markdown!
+  - DEV: Align Debian packaging
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Mon, 12 Apr 2021 15:09:25 +0200
+
 gcfg (3.0.20180514a) UNRELEASED; urgency=low
 
   * NEW RELEASE

@@ -17,16 +17,10 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import errno
-import os
-import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -68,7 +62,6 @@ class GCfgVerify(GCfgBin):
             help='specific file to verify (or force to change link type)'
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -95,7 +88,8 @@ class GCfgVerify(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         oGCfgLib.verify(
             self._oArguments.file,
             self._oArguments.link,

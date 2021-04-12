@@ -17,11 +17,6 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgLib
 import argparse
 import errno
 import os
@@ -29,6 +24,9 @@ import pwd
 import socket
 import sys
 import textwrap
+
+from gcfg import GCFG_VERSION, GCfgLib
+
 
 # Constants
 GCFG_COMMANDS = {
@@ -282,7 +280,7 @@ class GCfgBin:
             lArguments = []
             for i in range(1, len(sys.argv)):
                 s = sys.argv[i]
-                if sCommand is None and s[0]!='-':
+                if sCommand is None and s[0] != '-':
                     sCommand = s
                     continue
                 lArguments += [s]
@@ -291,9 +289,9 @@ class GCfgBin:
             cCommand = GCFG_COMMANDS[sCommand]
             oCommand = getattr(__import__('gcfg.%s' % sCommand, fromlist=['gcfg']), cCommand)
 
-        except (IndexError, KeyError) as e:
+        except (IndexError, KeyError):
             sys.stdout.write('usage: gcfg <command>\n')
-            if len(sys.argv)<=1:
+            if len(sys.argv) <= 1:
                 sys.stdout.write('error: too few arguments\n')
             elif sys.argv[1] in ['help', '--help', '-h']:
                 self._help()

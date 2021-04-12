@@ -17,16 +17,11 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import errno
-import os
 import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -69,7 +64,6 @@ class GCfgOriginal(GCfgBin):
             help='file to show original content from'
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -96,7 +90,9 @@ class GCfgOriginal(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         sys.stdout.write(oGCfgLib.original(self._oArguments.file, self._oArguments.path))
-        if (self._oArguments.path): sys.stdout.write('\n')
+        if (self._oArguments.path):
+            sys.stdout.write('\n')
         return 0

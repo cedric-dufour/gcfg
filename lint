@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+## Lint
+SELF_DIR="$(dirname "${0}")"
+
+# Python
+flake8 --config "${SELF_DIR}/.flake8"

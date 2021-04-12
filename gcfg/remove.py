@@ -17,16 +17,10 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import errno
-import os
-import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -67,7 +61,6 @@ class GCfgRemove(GCfgBin):
             help='file to remove'
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -94,7 +87,8 @@ class GCfgRemove(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         oGCfgLib.remove(
             self._oArguments.file,
             self._oArguments.batch,

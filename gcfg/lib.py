@@ -17,9 +17,6 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-import argparse
 import errno
 import inspect
 import subprocess
@@ -51,7 +48,7 @@ class GCfgLib:
         # ... on *nix system, use 'pwd' as (current) working directory (without symlinks being dereferenced)
         oPopen = subprocess.Popen('pwd', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (bStdOut, bStdErr) = oPopen.communicate()
-        if (oPopen.returncode==0):
+        if (oPopen.returncode == 0):
             self.__sWorkingDirectory = bStdOut.decode(sys.stdout.encoding).splitlines()[0]
         else:
             self.__sWorkingDirectory = os.getcwd()
@@ -61,9 +58,8 @@ class GCfgLib:
         self.__bSilent = False
         self.__asSubRepositories = {}
         # ... regular expressions
-        self.__rePathCron = re.compile('.*%scron\..*%s.*' % (re.escape(os.sep), re.escape(os.sep)))
+        self.__rePathCron = re.compile(".*%scron\\..*%s.*" % (re.escape(os.sep), re.escape(os.sep)))
         self.__reFileText = re.compile('(^| )text( |$)')
-
 
     #------------------------------------------------------------------------------
     # METHODS
@@ -81,7 +77,6 @@ class GCfgLib:
         """
         sys.stderr.write('ERROR[%s]: %s\n' % (inspect.currentframe().f_back.f_code.co_name.lstrip('_'), _sMessage))
 
-
     def _WARNING(self, _sMessage):
         """
         Write the given warning message to the standard error output.
@@ -91,7 +86,6 @@ class GCfgLib:
         if not self.__bSilent:
             sys.stderr.write('WARNING[%s]: %s\n' % (inspect.currentframe().f_back.f_code.co_name.lstrip('_'), _sMessage))
 
-
     def _INFO(self, _sMessage):
         """
         Write the given informational message to the standard output.
@@ -100,7 +94,6 @@ class GCfgLib:
         """
         if not self.__bSilent:
             sys.stdout.write('INFO[%s]: %s\n' % (inspect.currentframe().f_back.f_code.co_name.lstrip('_'), _sMessage))
-
 
     def _DEBUG(self, _sMessage):
         """
@@ -125,7 +118,6 @@ class GCfgLib:
         self.__bDebug = _bDebug
         self.__bSilent = False
 
-
     def setSilent(self, _bSilent):
         """
         Mute all informational and warning messages.
@@ -135,7 +127,6 @@ class GCfgLib:
 
         if not self.__bDebug:
             self.__bSilent = _bSilent
-
 
     def _confirm(self, _sPrompt, _lOptions, _sOptionDefault=None):
         """
@@ -155,7 +146,7 @@ class GCfgLib:
             sOptionDefault = sOptionDefault.lower()
         lOptions = []
         for sOption in _lOptions:
-            if sOption==_sOptionDefault:
+            if sOption == _sOptionDefault:
                 lOptions += sOption.upper()
             else:
                 lOptions += sOption.lower()
@@ -169,9 +160,8 @@ class GCfgLib:
             sChoice = input().lower()
             if not sChoice and sOptionDefault is not None:
                 sChoice = sOptionDefault
-            if sChoice in lOptions or sChoice==sOptionDefault:
+            if sChoice in lOptions or sChoice == sOptionDefault:
                 return sChoice
-
 
     def _dirpath(self, _sPath):
         """
@@ -183,9 +173,9 @@ class GCfgLib:
         """
 
         sDirname = os.path.dirname(_sPath)
-        if not sDirname: sDirname = '.'
+        if not sDirname:
+            sDirname = '.'
         return sDirname
-
 
     def _mkdir(self, _sDirectory):
         """
@@ -196,7 +186,6 @@ class GCfgLib:
 
         self._DEBUG('Creating directory; %s' % _sDirectory)
         os.makedirs(_sDirectory)
-
 
     def mkdir(self, _sDirectory):
         """
@@ -216,7 +205,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sDirectory))
             raise EnvironmentError(e.errno, 'Failed to create directory')
 
-
     def _rmdir(self, _sDirectory):
         """
         Remove the given directory (recursively).
@@ -227,9 +215,8 @@ class GCfgLib:
         self._DEBUG('Removing directory; %s' % _sDirectory)
         try:
             os.removedirs(_sDirectory)
-        except OSError as e:
+        except OSError:
             pass
-
 
     def rmdir(self, _sDirectory):
         """
@@ -249,7 +236,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sDirectory))
             raise EnvironmentError(e.errno, 'Failed to remove directory')
 
-
     def _cp(self, _sSource, _sDestination):
         """
         Copy the specified source file/directory to the specified destination file/directory.
@@ -263,9 +249,8 @@ class GCfgLib:
         shutil.copy2(_sSource, _sDestination)
         try:
             os.chown(_sDestination, oStat.st_uid, oStat.st_gid)
-        except OSError as e:
+        except OSError:
             self._WARNING('Failed to preserve file ownership; %s => %s' % (_sSource, _sDestination))
-
 
     def _mv(self, _sSource, _sDestination):
         """
@@ -280,9 +265,8 @@ class GCfgLib:
         shutil.move(_sSource, _sDestination)
         try:
             os.chown(_sDestination, oStat.st_uid, oStat.st_gid)
-        except OSError as e:
+        except OSError:
             self._WARNING('Failed to preserve file ownership; %s => %s' % (_sSource, _sDestination))
-
 
     def _rm(self, _sFile):
         """
@@ -293,7 +277,6 @@ class GCfgLib:
 
         self._DEBUG('Removing file; %s' % _sFile)
         os.unlink(_sFile)
-
 
     def _shellCommand(self, _lCommand, _sWorkingDirectory=None, _bRedirectStdOut=True, _bIgnoreReturnCode=False):
         """
@@ -324,13 +307,12 @@ class GCfgLib:
                 stderr=subprocess.PIPE
             )
         (bStdOut, bStdErr) = oPopen.communicate()
-        if not _bIgnoreReturnCode and oPopen.returncode!=0:
+        if not _bIgnoreReturnCode and oPopen.returncode != 0:
             raise EnvironmentError(oPopen.returncode, bStdErr.decode(sys.stderr.encoding))
         if bStdOut is not None:
             return bStdOut.decode(sys.stdout.encoding)
         else:
             return None
-
 
     def getCanonicalPath(self, _sPath, _bAllowDirectory=False):
         """
@@ -349,7 +331,8 @@ class GCfgLib:
 
             # Call stat() to raise any OS-level exception (permission denied, no such file, etc.)
             sParent = self._dirpath(_sPath)
-            if not sParent: sParent = '.'
+            if not sParent:
+                sParent = '.'
             if os.path.exists(_sPath):
                 os.stat(_sPath)
             elif os.path.isdir(sParent):
@@ -361,12 +344,12 @@ class GCfgLib:
             if os.path.isfile(_sPath) or not os.path.exists(_sPath):
                 # ... for a (potentially not existing) file
                 return os.path.join(
-                    os.path.normpath(os.path.join(self.__sWorkingDirectory,sParent)),
+                    os.path.normpath(os.path.join(self.__sWorkingDirectory, sParent)),
                     os.path.basename(_sPath)
                 )
             elif _bAllowDirectory and os.path.isdir(_sPath):
                 # ... for a directory (if allowed)
-                return os.path.normpath(os.path.join(self.__sWorkingDirectory,_sPath))
+                return os.path.normpath(os.path.join(self.__sWorkingDirectory, _sPath))
             else:
                 # ... for neither directory nor file
                 raise EnvironmentError(errno.ENOENT, 'Invalid path')
@@ -374,7 +357,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sPath))
             raise EnvironmentError(e.errno, 'Failed to retrieve canonical path')
-
 
     def _getRepositoryPath(self, _sRepository, _sFileActual=None):
         """
@@ -390,7 +372,6 @@ class GCfgLib:
         if _sFileActual is not None:
             sPath = os.path.join(sPath, _sFileActual.lstrip(os.sep))
         return sPath
-
 
     def getRepositoryPath(self, _sRepository, _sFileActual=None):
         """
@@ -412,9 +393,8 @@ class GCfgLib:
             # Repository path
             return self._getRepositoryPath(_sRepository, _sFileActual)
 
-        except IndexError as e:
+        except IndexError:
             raise EnvironmentError(errno.EINVAL, 'Invalid repository; %s' % _sRepository)
-
 
     def _isLinked(self, _sFileGIT, _sFileActual):
         """
@@ -430,7 +410,7 @@ class GCfgLib:
         # Symlink ?
         self._DEBUG('Checking file is symkink; %s' % _sFileActual)
         if os.path.islink(_sFileActual):
-            if not os.path.exists(_sFileActual) or not os.path.realpath(_sFileActual)==_sFileGIT:
+            if not os.path.exists(_sFileActual) or not os.path.realpath(_sFileActual) == _sFileGIT:
                 return (False, 'symlink')
             return (True, 'symlink')
 
@@ -443,23 +423,22 @@ class GCfgLib:
         self._DEBUG('Checking file is hardlink; %s' % _sFileActual)
         oStatGIT = os.stat(_sFileGIT)
         oStatActual = os.stat(_sFileActual)
-        if oStatGIT.st_dev==oStatActual.st_dev and oStatGIT.st_ino==oStatActual.st_ino:
+        if oStatGIT.st_dev == oStatActual.st_dev and oStatGIT.st_ino == oStatActual.st_ino:
             return (True, 'hardlink')
 
         # Copy ?
         self._DEBUG('Checking file is copy; %s' % _sFileActual)
-        if not oStatGIT.st_size==oStatActual.st_size:
+        if not oStatGIT.st_size == oStatActual.st_size:
             return (False, 'copy')
         with open(_sFileGIT, 'rb', 65536) as fFileGIT:
             with open(_sFileActual, 'rb', 65536) as fFileActual:
                 while True:
                     byReadGIT = fFileGIT.read(65536)
                     byReadActual = fFileActual.read(65536)
-                    if not byReadGIT==byReadActual:
+                    if not byReadGIT == byReadActual:
                         return (False, 'copy')
-                    if byReadGIT==b'':
+                    if byReadGIT == b'':
                         return (True, 'copy')
-
 
     def isLinked(self, _sFileActual):
         """
@@ -485,7 +464,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to compare files')
-
 
     def _link(self, _sFileGIT, _sFileActual, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -518,14 +496,14 @@ class GCfgLib:
         sLink_validated = _sLink
         if sLink_validated is None:
             sLink_validated = 'hardlink'
-        if os.stat(sDirGIT).st_dev!=os.stat(sDirActual).st_dev:
+        if os.stat(sDirGIT).st_dev != os.stat(sDirActual).st_dev:
             sLink_validated = 'copy'
         elif self.__rePathCron.search(_sFileActual) is not None:
             sLink_validated = 'symlink'
-        if _sLink is not None and sLink_validated!=_sLink:
+        if _sLink is not None and sLink_validated != _sLink:
             self._WARNING('Link type overridden; %s => %s' % (_sLink, sLink_validated))
             if not _bBatch:
-                if self._confirm('Use overridden link type', ['y','n'])!='y':
+                if self._confirm('Use overridden link type', ['y', 'n']) != 'y':
                     return None
             elif not _bForce:
                 raise EnvironmentError(errno.EPERM, 'Cannot change link type (unless forced)')
@@ -536,13 +514,13 @@ class GCfgLib:
         (bLinked, sLink_actual) = self._isLinked(_sFileGIT, _sFileActual)
         self._DEBUG('=> %s (%s)' % (bLinked, sLink_actual))
         # ... link type
-        if _sLink is not None and sLink_actual is not None and not sLink_actual==sLink_validated:
+        if _sLink is not None and sLink_actual is not None and not sLink_actual == sLink_validated:
             self._WARNING('Link type differs; %s (%s <> %s)' % (_sFileActual, sLink_actual, sLink_validated))
             if not _bBatch:
-                if self._confirm('Replace existing link', ['y','n'])!='y':
+                if self._confirm('Replace existing link', ['y', 'n']) != 'y':
                     return None
             elif not _bForce:
-                    raise EnvironmentError(errno.EPERM, 'Cannot replace existing link (unless forced)')
+                raise EnvironmentError(errno.EPERM, 'Cannot replace existing link (unless forced)')
         elif bLinked:
             return None
 
@@ -553,25 +531,25 @@ class GCfgLib:
                 if os.path.exists(_sFileActual):
                     self._WARNING('File differs from its GIT sibling (copy); %s' % _sFileActual)
                     sPrompt = 'Show [D]ifferences, use [G]IT/[E]xisting file, [P]urge or [S]kip'
-                    lChoices = ['d','g','e','p','s']
+                    lChoices = ['d', 'g', 'e', 'p', 's']
                 else:
                     self._WARNING('File is missing; %s' % _sFileActual)
                     sPrompt = 'Use [G]IT file, [P]urge or [S]kip'
-                    lChoices = ['g','p','s']
+                    lChoices = ['g', 'p', 's']
                 while True:
                     sConfirm = self._confirm(sPrompt, lChoices)
-                    if sConfirm=='s':
+                    if sConfirm == 's':
                         return None
-                    if sConfirm=='p':
+                    if sConfirm == 'p':
                         self.remove(_sFileActual, True, True)
                         return None
-                    elif sConfirm=='e':
+                    elif sConfirm == 'e':
                         bUseFileActual = True
                         break
-                    elif sConfirm=='g':
+                    elif sConfirm == 'g':
                         bUseFileActual = False
                         break
-                    elif sConfirm=='d':
+                    elif sConfirm == 'd':
                         self._shellCommand(['diff', '-uN', '--label', 'GIT', _sFileGIT, _sFileActual], None, False, True)
             else:
                 if not _bForce:
@@ -579,16 +557,16 @@ class GCfgLib:
                 bUseFileActual = os.path.exists(_sFileActual)
 
         # Move/create GIT file
-        if bUseFileActual==True:
+        if bUseFileActual is True:
             self._DEBUG('Updating GIT file; %s => %s' % (_sFileActual, _sFileGIT))
             self._rm(_sFileGIT)
             self._cp(os.path.realpath(_sFileActual), _sFileGIT)
             self._rm(_sFileActual)
-        elif bUseFileActual==False:
+        elif bUseFileActual is False:
             self._DEBUG('Using existing GIT file; %s' % _sFileGIT)
             if os.path.exists(_sFileActual):
                 if not _bBatch:
-                    if self._confirm('Save original file', ['y','n'], 'n')=='y':
+                    if self._confirm('Save original file', ['y', 'n'], 'n') == 'y':
                         self.saveFileOriginal(_sFileActual, _sFileActual, True, True)
                 self._rm(_sFileActual)
         elif os.path.exists(_sFileActual):
@@ -600,22 +578,21 @@ class GCfgLib:
             self._rm(_sFileActual)
         elif not os.path.exists(_sFileGIT):
             self._DEBUG('Creating blank GIT file; %s' % _sFileGIT)
-            with open(_sFileGIT, 'w') as fFileGIT:
+            with open(_sFileGIT, 'w'):
                 pass
 
         # Link
         self._DEBUG('Linking file; %s -> %s (%s)' % (_sFileActual, _sFileGIT, sLink_validated))
-        if sLink_validated=='hardlink':
+        if sLink_validated == 'hardlink':
             os.link(_sFileGIT, _sFileActual)
-        elif sLink_validated=='symlink':
+        elif sLink_validated == 'symlink':
             os.symlink(_sFileGIT, _sFileActual)
-        elif sLink_validated=='copy':
+        elif sLink_validated == 'copy':
             self._cp(_sFileGIT, _sFileActual)
         else:
             # Something's very wrong...
             raise Exception('Invalid link type; %s' % sLink_validated)
         return sLink_validated
-
 
     def link(self, _sFileActual, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -634,7 +611,8 @@ class GCfgLib:
         @return string  Created link type; None no link was created
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
@@ -662,7 +640,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to link file to its GIT sibling')
 
-
     def _gitCommand(self, _lArguments, _bRedirectStdOut=True):
         """
         Execute the GIT command with the given arguments, within the GIT sub-repository.
@@ -674,9 +651,8 @@ class GCfgLib:
         """
 
         # Execute shell command
-        lCommand = ['git']+_lArguments
+        lCommand = ['git'] + _lArguments
         return self._shellCommand(lCommand, self.__asSubRepositories['git'], _bRedirectStdOut)
-
 
     def _saveFileOriginal(self, _sFileOriginal, _sFileSource, _bBatch=False, _bForce=False):
         """
@@ -693,7 +669,6 @@ class GCfgLib:
         self.mkdir(self._dirpath(_sFileOriginal))
         self._cp(_sFileSource, _sFileOriginal)
 
-
     def saveFileOriginal(self, _sFileActual, _sFileSource, _bBatch=False, _bForce=False):
         """
         Save the given original file.
@@ -705,7 +680,8 @@ class GCfgLib:
         @param  bool    _bForce       Forced batch mode
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
             # Paths
@@ -714,7 +690,7 @@ class GCfgLib:
             # Confirmation
             if os.path.exists(sFileOriginal):
                 if not _bBatch:
-                    if self._confirm('Update original file', ['y','n'], 'y')!='y':
+                    if self._confirm('Update original file', ['y', 'n'], 'y') != 'y':
                         return
                 elif not _bForce:
                     raise EnvironmentError(errno.EPERM, 'Cannot update original file (unless forced)')
@@ -725,7 +701,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed save original file')
-
 
     def _saveFileGIT(self, _sFileGIT, _sFileActual, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -740,7 +715,6 @@ class GCfgLib:
         # Update GIT sub-repository
         self._link(_sFileGIT, _sFileActual, _sLink, _bBatch, _bForce)
 
-
     def saveFileGIT(self, _sFileActual, _sLink=None, _bBatch=False, _bForce=False):
         """
         Save the given GIT file.
@@ -751,7 +725,8 @@ class GCfgLib:
         @param  bool    _bForce       Forced batch mode
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
@@ -762,7 +737,7 @@ class GCfgLib:
             # Confirmation
             if os.path.exists(sFileGIT):
                 if not _bBatch:
-                    if self._confirm('Update GIT file', ['y','n'], 'y')!='y':
+                    if self._confirm('Update GIT file', ['y', 'n'], 'y') != 'y':
                         return
                 elif not _bForce:
                     raise EnvironmentError(errno.EPERM, 'Cannot update GIT file (unless forced)')
@@ -806,15 +781,16 @@ class GCfgLib:
                     self._DEBUG('Creating sub-repository directory; %s' % sPath)
                     os.mkdir(sPath)
                     # ... placeholder (prevent recursive deletion)
-                    if sRepository!='git':
+                    if sRepository != 'git':
                         sPlaceholder = os.path.join(sPath, '.placeholder')
-                        with open(sPlaceholder, 'w') as fPlaceholder:
-                            os.chmod(sPlaceholder, 0o444)
+                        with open(sPlaceholder, 'w'):
+                            pass
+                        os.chmod(sPlaceholder, 0o444)
                 else:
                     raise EnvironmentError(errno.ENOENT, 'Sub-repository directory is missing')
             if not os.path.isdir(sPath):
                 raise EnvironmentError(errno.ENOTDIR, 'Existing path is not a directory')
-            if not os.access(sPath, os.W_OK|os.X_OK):
+            if not os.access(sPath, os.W_OK | os.X_OK):
                 raise EnvironmentError(errno.EACCES, 'Cannot write to directory')
 
         # GIT repository
@@ -828,7 +804,7 @@ class GCfgLib:
                 raise EnvironmentError(errno.ENOENT, 'GIT is not initialized')
         if not os.path.isdir(sPath):
             raise EnvironmentError(errno.ENOTDIR, 'Existing path is not a directory')
-        if not os.access(sPath, os.W_OK|os.X_OK):
+        if not os.access(sPath, os.W_OK | os.X_OK):
             raise EnvironmentError(errno.EACCES, 'Cannot write to directory')
 
         # Packages listing
@@ -845,7 +821,6 @@ class GCfgLib:
             raise EnvironmentError(errno.ENOENT, 'Existing path is not a file')
         if not os.access(sPath, os.W_OK):
             raise EnvironmentError(errno.EACCES, 'Cannot write to file')
-
 
     def check(self, _bInitialize=False, _bBatch=False):
         """
@@ -867,7 +842,7 @@ class GCfgLib:
             if not os.path.exists(sPath):
                 if _bInitialize:
                     if not _bBatch:
-                        if self._confirm('Create repository directory; %s' % sPath, ['y','n'], 'y')!='y':
+                        if self._confirm('Create repository directory; %s' % sPath, ['y', 'n'], 'y') != 'y':
                             return False
                     self._mkdir(sPath)
                 else:
@@ -883,7 +858,6 @@ class GCfgLib:
             raise EnvironmentError(e.errno, 'Failed to check/initialize repository')
 
         return True
-
 
     def _verify(self, _sFileActual=None, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -904,7 +878,6 @@ class GCfgLib:
             for sFileActual in sorted(self._list()):
                 self.link(sFileActual, None, _bBatch, _bForce)
 
-
     def verify(self, _sFileActual=None, _sLink=None, _bBatch=False, _bForce=False):
         """
         Verify the given file (or all files if ommitted) are correctly linked.
@@ -916,7 +889,8 @@ class GCfgLib:
         @param  bool    _bForce       Forced batch mode
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
@@ -937,7 +911,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to verify configuration repository consistency')
 
-
     def _list(self, _sFlag=None):
         """
         Return the list of files in the configuration repository,
@@ -953,7 +926,7 @@ class GCfgLib:
         dlFiles_flags = None
         dsFiles_git = None
         if _sFlag is not None:
-            if _sFlag=='@FLAGS' or _sFlag[:5]=='@GIT:':
+            if _sFlag == '@FLAGS' or _sFlag[:5] == '@GIT:':
                 # Retrieve files GIT status
                 self._DEBUG('Retrieving files GIT status')
                 sFiles_git = self._shellCommand(['git', 'status', '--porcelain'], self.__asSubRepositories['git'])
@@ -963,7 +936,7 @@ class GCfgLib:
                     sFileActual = '/%s' % sGIT[3:]
                     dsFiles_git[sFileActual] = '@GIT:%s' % sGIT[:2].replace(' ', '_')
 
-            if _sFlag[:5]=='@GIT:':
+            if _sFlag[:5] == '@GIT:':
                 # Match GIT flags
                 self._DEBUG('Matching files GIT status; %s' % _sFlag)
                 lFiles = self._shellCommand(['find', '.', '-type', 'f', '-not', '-path', './.git/*'], self.__asSubRepositories['git']).splitlines()
@@ -971,13 +944,13 @@ class GCfgLib:
                 dlFiles = {}
                 for sFileActual in lFiles:
                     if sFileActual in dsFiles_git:
-                        if _sFlag==dsFiles_git[sFileActual]:
+                        if _sFlag == dsFiles_git[sFileActual]:
                             dlFiles[sFileActual] = None
                     else:
-                        if _sFlag=='@GIT:__':
+                        if _sFlag == '@GIT:__':
                             dlFiles[sFileActual] = None
 
-            elif _sFlag=='@FLAGS':
+            elif _sFlag == '@FLAGS':
                 # Retrieve files flags
                 sRepositoryFlag = self.__asSubRepositories['flag']
                 self._DEBUG('Retrieving files flags')
@@ -1002,7 +975,7 @@ class GCfgLib:
             dlFiles = dict.fromkeys([s.lstrip('.') for s in lFiles])
 
         # Add flags
-        if _sFlag=='@FLAGS':
+        if _sFlag == '@FLAGS':
             self._DEBUG('Adding flags')
             for sFileActual in dlFiles:
                 dlFiles[sFileActual] = []
@@ -1015,7 +988,6 @@ class GCfgLib:
 
         # Done
         return dlFiles
-
 
     def list(self, _sFlag=None):
         """
@@ -1037,7 +1009,6 @@ class GCfgLib:
             self._ERROR(e.strerror)
             raise EnvironmentError(e.errno, 'Failed to list files in the configuration repository')
 
-
     def _add(self, _sFileActual, _sFileOriginal=None, _sLink=None, _bBatch=False, _bForce=False):
         """
         Add the given file to the configuration respository.
@@ -1053,9 +1024,6 @@ class GCfgLib:
         @return bool  True if the file was actually added
         """
 
-        # Paths
-        sFileGIT = self._getRepositoryPath('git', _sFileActual)
-
         # Original file
         if _sFileOriginal is not None:
             self.saveFileOriginal(_sFileActual, _sFileOriginal, _bBatch)
@@ -1065,7 +1033,6 @@ class GCfgLib:
 
         # Done
         return True
-
 
     def add(self, _sFileActual, _sbFileOriginal=None, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -1083,7 +1050,9 @@ class GCfgLib:
         @return bool  True if the file was actually added
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
+
         if isinstance(_sbFileOriginal, bool):
             if _sbFileOriginal:
                 _sbFileOriginal = _sFileActual
@@ -1118,13 +1087,13 @@ class GCfgLib:
             if _sbFileOriginal is not None:
                 sFileOriginal_source = _sbFileOriginal
             elif os.path.exists(_sFileActual):
-                    if not _bBatch:
-                        if os.path.exists(sFileOriginal):
-                            sDefaultChoice = 'n'
-                        else:
-                            sDefaultChoice = 'y'
-                        if self._confirm('Save original file', ['y','n'], sDefaultChoice)=='y':
-                            sFileOriginal_source = _sFileActual
+                if not _bBatch:
+                    if os.path.exists(sFileOriginal):
+                        sDefaultChoice = 'n'
+                    else:
+                        sDefaultChoice = 'y'
+                    if self._confirm('Save original file', ['y', 'n'], sDefaultChoice) == 'y':
+                        sFileOriginal_source = _sFileActual
 
             # Add file
             bAdded = self._add(sFileActual, sFileOriginal_source, _sLink, _bBatch, _bForce)
@@ -1135,7 +1104,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to add file to configuration repository')
-
 
     def _copy(self, _sFileActual, _sFileSource, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -1178,7 +1146,6 @@ class GCfgLib:
         # Done
         return True
 
-
     def copy(self, _sFileActual, _sFileSource, _sLink=None, _bBatch=False, _bForce=False):
         """
         Add the given file to the configuration respository, copying the specified source file.
@@ -1193,7 +1160,8 @@ class GCfgLib:
         @return bool  True if the file was actually copied
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
@@ -1203,7 +1171,7 @@ class GCfgLib:
             # Confirmation
             if os.path.exists(sFileActual):
                 if not _bBatch:
-                    if self._confirm('Overwrite existing file', ['y','n'])!='y':
+                    if self._confirm('Overwrite existing file', ['y', 'n']) != 'y':
                         return
 
             # Copy file
@@ -1221,7 +1189,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s X> %s' % (e.strerror, _sFileSource, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to copy file')
-
 
     def _move(self, _sFileActual, _sFileDestination, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -1242,7 +1209,7 @@ class GCfgLib:
         sFileOriginal_src = self._getRepositoryPath('original', _sFileActual)
         sFileFlag_src = self._getRepositoryPath('flag', _sFileActual)
         # ...destination
-        sFileGIT_dst = self._getRepositoryPath('git', _sFileDestination)
+        #sFileGIT_dst = self._getRepositoryPath('git', _sFileDestination)
         sFileOriginal_dst = self._getRepositoryPath('original', _sFileDestination)
         sFileFlag_dst = self._getRepositoryPath('flag', _sFileDestination)
 
@@ -1250,8 +1217,6 @@ class GCfgLib:
         (bLinked, sLink) = self._isLinked(sFileGIT_src, _sFileActual)
         if not bLinked:
             raise EnvironmentError(errno.EAGAIN, 'Source file is inconsistent')
-        if _sLink is not None:
-            sLink = _sLink
 
         # Copy actual file (and save its original)
         self._DEBUG('Copying GIT file; %s -> %s' % (_sFileActual, _sFileDestination))
@@ -1267,11 +1232,11 @@ class GCfgLib:
         # Source original file
         if os.path.exists(sFileOriginal_src):
             if not _bBatch:
-                if self._confirm('Overwrite destination original with source original file', ['y','n'])=='y':
+                if self._confirm('Overwrite destination original with source original file', ['y', 'n']) == 'y':
                     self._DEBUG('Moving source original file to destination original file; %s -> %s' % (sFileOriginal_src, sFileOriginal_dst))
                     self.saveFileOriginal(_sFileDestination, sFileOriginal_src, True, True)
                     self._rm(sFileOriginal_src)
-                elif self._confirm('Delete source original file (it will not be restored)', ['y','n'])=='y':
+                elif self._confirm('Delete source original file (it will not be restored)', ['y', 'n']) == 'y':
                     self._DEBUG('Removing source original file; %s' % sFileOriginal_src)
                     self._rm(sFileOriginal_src)
 
@@ -1281,7 +1246,6 @@ class GCfgLib:
 
         # Done
         return True
-
 
     def move(self, _sFileActual, _sFileDestination, _sLink=None, _bBatch=False, _bForce=False):
         """
@@ -1297,7 +1261,8 @@ class GCfgLib:
         @return bool  True if the file was actually moved
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
@@ -1324,7 +1289,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to move file')
-
 
     def _remove(self, _sFileActual, _bBatch=False, _bForce=False, _bRestoreOriginal=True):
         """
@@ -1372,7 +1336,6 @@ class GCfgLib:
         # Done
         return True
 
-
     def remove(self, _sFileActual, _bBatch=False, _bForce=False):
         """
         Remove the given file from the configuration respository.
@@ -1385,7 +1348,8 @@ class GCfgLib:
         @return bool  True if the file was actually removed
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
@@ -1414,7 +1378,7 @@ class GCfgLib:
                         sPrompt = 'Remove @EDITED file from configuration repository'
                     else:
                         sPrompt = 'Remove file from configuration repository'
-                    if self._confirm(sPrompt, ['y','n'])!='y':
+                    if self._confirm(sPrompt, ['y', 'n']) != 'y':
                         return False
                 elif not _bForce:
                     if not os.path.exists(sFileGIT):
@@ -1435,7 +1399,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to remove file')
 
-
     def _edit(self, _sFileActual, _sLink=None):
         """
         Edit the given file (adds it to the GIT sub-repository if needs be).
@@ -1449,16 +1412,15 @@ class GCfgLib:
 
         # Edit
         oStat_before = os.stat(_sFileActual)
-        sEditor = os.getenv('EDITOR', 'vi');
+        sEditor = os.getenv('EDITOR', 'vi')
         self._shellCommand([sEditor, _sFileActual], None, False)
         oStat_after = os.stat(_sFileActual)
 
         # Edited ?
-        if oStat_before.st_mtime!=oStat_after.st_mtime:
+        if oStat_before.st_mtime != oStat_after.st_mtime:
             self._flag(_sFileActual, '@EDITED')
             return True
         return False
-
 
     def edit(self, _sFileActual, _sLink=None):
         """
@@ -1480,7 +1442,7 @@ class GCfgLib:
 
             # Check
             if not os.path.exists(sFileGIT):
-                if self._confirm('Add file to configuration repository', ['y','n'], 'y')!='y':
+                if self._confirm('Add file to configuration repository', ['y', 'n'], 'y') != 'y':
                     return False
                 if not self.add(sFileActual):
                     return False
@@ -1491,7 +1453,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to edit file')
-
 
     def _permissions(self, _sFileActual, _sMode=None, _sOwner=None):
         """
@@ -1520,7 +1481,6 @@ class GCfgLib:
         # Retrieve
         oStat = os.stat(sFileGIT)
         return (oStat.st_mode, oStat.st_uid, oStat.st_gid)
-
 
     def permissions(self, _sFileActual, _sMode=None, _sOwner=None):
         """
@@ -1557,7 +1517,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to change/retrieve file permissions')
 
-
     def _flag(self, _sFileActual, _sFlag):
         """
         Add the given flag to the given file.
@@ -1586,7 +1545,6 @@ class GCfgLib:
         self._DEBUG('Writing flag file; %s' % sFileFlag)
         with open(sFileFlag, 'w') as fFileFlag:
             fFileFlag.write('\n'.join(lFlags))
-
 
     def flag(self, _sFileActual, _sFlag, _bForce=False):
         """
@@ -1619,7 +1577,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to add flag to file')
 
-
     def _unflag(self, _sFileActual, _sFlag):
         """
         Remove the given flag from the given file.
@@ -1642,7 +1599,7 @@ class GCfgLib:
         lFlags = sorted(set(lFlags))
         try:
             lFlags.remove(_sFlag)
-        except ValueError as e:
+        except ValueError:
             pass
         if lFlags:
             self._DEBUG('Writing flags file; %s' % sFileFlag)
@@ -1652,7 +1609,6 @@ class GCfgLib:
             self._DEBUG('Removing empty flags file; %s' % sFileFlag)
             self._rm(sFileFlag)
             self._rmdir(os.path.dirname(sFileFlag))
-
 
     def unflag(self, _sFileActual, _sFlag):
         """
@@ -1680,7 +1636,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to remove flag from file')
 
-
     def _flagged(self, _sFileActual, _sFlag=None):
         """
         Test the given flag for the given file or
@@ -1706,10 +1661,10 @@ class GCfgLib:
         with open(sFileFlag, 'r') as fFileFlag:
             lFlags = fFileFlag.read().splitlines()
         if _sFlag is not None:
-            if _sFlag in lFlags: return True
+            if _sFlag in lFlags:
+                return True
             return False
         return lFlags
-
 
     def flagged(self, _sFileActual, _sFlag):
         """
@@ -1740,7 +1695,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to retrieve flags for file')
 
-
     def _original(self, _sFileActual, _bPathOnly=False):
         """
         Return the original content (path) of the given file.
@@ -1767,7 +1721,6 @@ class GCfgLib:
         with open(sFileOriginal, 'r') as fFileOriginal:
             sOriginal = fFileOriginal.read()
         return sOriginal
-
 
     def original(self, _sFileActual, _bPathOnly=False):
         """
@@ -1797,7 +1750,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to retrieve the file original content')
 
-
     def _delta(self, _sFileActual, _sCommentPrefix=None, _bRedirectStdOut=True):
         """
         Return the difference (diff -uN) between the given file and its original content.
@@ -1826,7 +1778,6 @@ class GCfgLib:
                     fFileActual_tmp.flush()
                     sDifferences = self._shellCommand(['diff', '-uN', '--label', 'ORIGINAL', '--label', _sFileActual, fFileOriginal_tmp.name, fFileActual_tmp.name], None, _bRedirectStdOut, True)
         return sDifferences
-
 
     def delta(self, _sFileActual, _sCommentPrefix=None, _bRedirectStdOut=True):
         """
@@ -1858,7 +1809,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sFileActual))
             raise EnvironmentError(e.errno, 'Failed to retrieve the file differences')
 
-
     def _pkglist(self, _sPath=None):
         """
         Return (or saves) the list of (manually installed) packages.
@@ -1875,9 +1825,8 @@ class GCfgLib:
         # Save packages listing file
         if _sPath is not None:
             self._DEBUG('Saving packages listing file; %s' % _sPath)
-            fPackageListing = open(_sPath, 'w')
-            fPackageListing.write(sStdOut)
-            fPackageListing.close()
+            with open(_sPath, 'w') as fPackageListing:
+                fPackageListing.write(sStdOut)
             return None
         else:
             return sStdOut
@@ -1901,7 +1850,6 @@ class GCfgLib:
             self._ERROR('%s; %s' % (e.strerror, _sPath))
             raise EnvironmentError(e.errno, 'Failed to retrieve/save packages listing file')
 
-
     def _git(self, _sCommand, _lArguments, _bRedirectStdOut=True):
         """
         Execute the given GIT command for the given file.
@@ -1920,13 +1868,12 @@ class GCfgLib:
             _lArguments[iIndex] = sArgument.lstrip('/')
 
         # ... default commit author
-        if _sCommand=='commit':
+        if _sCommand == 'commit':
             if '--author' not in _lArguments:
                 _lArguments += ['--author', '%s <%s>' % (self.__sAuthor, self.__sEmail)]
 
         # Execute the GIT command
-        return self._gitCommand([_sCommand]+_lArguments, _bRedirectStdOut)
-
+        return self._gitCommand([_sCommand] + _lArguments, _bRedirectStdOut)
 
     def git(self, _lArguments, _bRedirectStdOut=True):
         """
@@ -1949,7 +1896,7 @@ class GCfgLib:
             lArguments = []
             sCommand = None
             for s in _lArguments:
-                if s[0]!='-':
+                if s[0] != '-':
                     if sCommand is None:
                         sCommand = s
                         continue
@@ -1961,7 +1908,6 @@ class GCfgLib:
         except EnvironmentError as e:
             self._ERROR(e.strerror)
             raise EnvironmentError(e.errno, 'Failed to execute GIT command')
-
 
     def _a2ps(self, _sFilePostscript, _sFlag=None, _bBatch=False, _bForce=False):
         """
@@ -1990,12 +1936,12 @@ class GCfgLib:
         )
         oPopen.stdout.close()
         (bStdOut, bStdErr) = oPopen_sub.communicate()
-        if oPopen_sub.returncode!=0:
+        if oPopen_sub.returncode != 0:
             raise EnvironmentError(oPopen_sub.returncode, bStdErr.decode(sys.stderr.encoding))
         dlFiles = {}
         for sLine in bStdOut.decode(sys.stdout.encoding).splitlines():
             iSeparator = sLine.rfind(':')
-            dlFiles[sLine[:iSeparator].lstrip('.')] = sLine[iSeparator+1:].strip()
+            dlFiles[sLine[:iSeparator].lstrip('.')] = sLine[iSeparator + 1:].strip()
 
         # Filter non-text files out
         self._DEBUG('Filtering (text) files; flag=%s' % _sFlag)
@@ -2016,7 +1962,6 @@ class GCfgLib:
         else:
             self._WARNING('Empty files list (Postscript file not created)')
 
-
     def a2ps(self, _sFilePostscript, _sFlag=None, _bBatch=False, _bForce=False):
         """
         Create a Postscript document with all (text) files in the configuration repository.
@@ -2028,14 +1973,15 @@ class GCfgLib:
         @param  bool    _bForce           Forced batch mode
         """
 
-        if _bForce: _bBatch = True
+        if _bForce:
+            _bBatch = True
 
         try:
 
             # Confirmation
             if not _bBatch:
                 if os.path.exists(_sFilePostscript):
-                    if self._confirm('Overwrite existing file', ['y','n'])!='y':
+                    if self._confirm('Overwrite existing file', ['y', 'n']) != 'y':
                         return
                     self._rm(_sFilePostscript)
                 else:

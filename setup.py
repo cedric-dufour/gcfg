@@ -8,10 +8,9 @@ import os
 
 # Setup
 setup(
-    name = 'gcfg',
-    description = 'GIT-based Configuration Tracking Utility (GCFG)',
-    long_description = \
-"""
+    name="gcfg",
+    description="GIT-based Configuration Tracking Utility (GCFG)",
+    long_description="""
 The objective of the GIT-based Configuration Tracking Utility (GCFG) is to
 allow the tracking and versioning of (mostly configuration) files on a system,
 in a manner that makes it easy to have a global overview of how the system is
@@ -66,13 +65,13 @@ All modified files being within the scope of a single GIT repository, backup,
 versions tracking and collaborative management are easily performed thanks
 to GIT.
 """,
-    version = os.getenv('VERSION'),
-    author = 'Cedric Dufour',
-    author_email = 'http://cedric.dufour.name',
-    license = 'GPL-3',
-    url = 'https://github.com/cedric-dufour/gcfg',
-    download_url = 'https://github.com/cedric-dufour/gcfg',
-    packages = [ 'gcfg' ],
-    requires = [ 'argparse' ],
-    scripts = [ 'gcfg-py' ],
-    )
+    version=os.getenv("VERSION"),
+    author="Cedric Dufour",
+    author_email="http://cedric.dufour.name",
+    license="GPL-3",
+    url="https://github.com/cedric-dufour/gcfg",
+    download_url="https://github.com/cedric-dufour/gcfg",
+    packages=["gcfg"],
+    requires=["argparse"],
+    scripts=["gcfg-py"],
+)

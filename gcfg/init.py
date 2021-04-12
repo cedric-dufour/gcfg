@@ -17,16 +17,10 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import errno
-import os
-import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -62,7 +56,6 @@ class GCfgInit(GCfgBin):
         # Additional arguments
         self._addOptionBatch(self._oArgumentParser)
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -89,5 +82,6 @@ class GCfgInit(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(True, self._oArguments.batch): return errno.EPERM
+        if not oGCfgLib.check(True, self._oArguments.batch):
+            return errno.EPERM
         return 0

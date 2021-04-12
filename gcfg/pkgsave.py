@@ -17,16 +17,10 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import errno
-import os
-import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -59,7 +53,6 @@ class GCfgPkgSave(GCfgBin):
             ''')
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -86,6 +79,7 @@ class GCfgPkgSave(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         oGCfgLib.pkglist(oGCfgLib.getRepositoryPath('pkglist'))
         return 0

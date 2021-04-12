@@ -18,14 +18,15 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-from gcfg import GCfgBin
 import sys
 
-# Excutes
+from gcfg import GCfgBin
+
+
+# Executes
 try:
     sys.exit(GCfgBin().execute())
 except EnvironmentError as e:
     sys.exit(e.errno)
-except KeyboardInterrupt as e:
+except KeyboardInterrupt:
     sys.exit(-2)

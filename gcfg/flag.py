@@ -17,15 +17,8 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
+from gcfg import GCfgBin
 import errno
-import os
-import sys
 import textwrap
 
 
@@ -71,7 +64,6 @@ class GCfgFlag(GCfgBin):
             help='alpha-numeric flag'
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -98,7 +90,8 @@ class GCfgFlag(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         oGCfgLib.flag(
             self._oArguments.file,
             self._oArguments.flag,

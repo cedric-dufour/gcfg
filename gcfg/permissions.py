@@ -17,19 +17,14 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import grp
 import errno
-import os
 import pwd
 import stat
 import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -76,11 +71,9 @@ class GCfgPermissions(GCfgBin):
             help='file owner (chown-like) to set'
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
-
 
     #
     # Main
@@ -104,7 +97,8 @@ class GCfgPermissions(GCfgBin):
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
         oGCfgLib.setSilent(self._oArguments.silent)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         (iMode, iUID, iGID) = oGCfgLib.permissions(
             self._oArguments.file,
             self._oArguments.mode,
@@ -115,6 +109,5 @@ class GCfgPermissions(GCfgBin):
             pwd.getpwuid(iUID)[0],
             grp.getgrgid(iGID)[0],
             self._oArguments.file
-            )
-        )
+        ))
         return 0

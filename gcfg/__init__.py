@@ -18,8 +18,8 @@
 #
 
 # Constants
-GCFG_VERSION = '%{VERSION}'
+GCFG_VERSION = "%{VERSION}"  # noqa
 
 # Dependencies
-from .lib import GCfgLib
-from .bin import GCfgBin
+from .lib import GCfgLib  # noqa
+from .bin import GCfgBin  # noqa

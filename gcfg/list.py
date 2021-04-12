@@ -17,16 +17,11 @@
 # See the GNU General Public License for more details.
 #
 
-# Modules
-# ... deb: python-argparse
-from gcfg import \
-    GCFG_VERSION, \
-    GCfgBin
-import argparse
 import errno
-import os
 import sys
 import textwrap
+
+from gcfg import GCfgBin
 
 
 #------------------------------------------------------------------------------
@@ -65,7 +60,6 @@ class GCfgList(GCfgBin):
             help='flag to match when listing files (or @FLAGS to see all flags)'
         )
 
-
     #------------------------------------------------------------------------------
     # METHODS
     #------------------------------------------------------------------------------
@@ -91,7 +85,8 @@ class GCfgList(GCfgBin):
         # Handle command
         oGCfgLib = self._getLibrary()
         oGCfgLib.setDebug(self._oArguments.debug)
-        if not oGCfgLib.check(): return errno.EPERM
+        if not oGCfgLib.check():
+            return errno.EPERM
         dlFiles = oGCfgLib.list(self._oArguments.flag)
         for sFile in sorted(dlFiles):
             lFlags = dlFiles[sFile]

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+## Lint
+SELF_DIR="$(dirname "${0}")"
+
+# YAML
+yamllint -c "${SELF_DIR}/.yamllint" .
+
+# Ansible
+ansible-lint -c "${SELF_DIR}/.ansible-lint" "${SELF_DIR}"/tests/playbook.yaml
+
+# Python
+flake8 --config "${SELF_DIR}/.flake8"

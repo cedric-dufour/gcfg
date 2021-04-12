@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e -o pipefail
+
+## Paths
+SELF_DIR="$(readlink -f "$(dirname "${0}")")"
+export ANSIBLE_COLLECTIONS_PATHS="${SELF_DIR}/..:${ANSIBLE_COLLECTIONS_PATHS}"
+
+
+## Tests
+: "${GCFG_ANSIBLE_TESTS:=prepare gcfg_init gcfg_pkgsave gcfg_file_hard gcfg_file_absent gcfg_file_link gcfg_file_absent gcfg_file_copy gcfg_file_absent gcfg_file gcfg_copy_content gcfg_copy_src gcfg_template gcfg_commit gcfg_file_absent gcfg_copy_content_absent gcfg_copy_src_absent gcfg_template_absent cleanup}"
+
+if [ -z "${GCFG_ANSIBLE_DEBUG}" ]; then
+  GCFG_ANSIBLE_DEBUG='--skip-tags debug'
+else
+  GCFG_ANSIBLE_DEBUG=
+fi
+
+for t in ${GCFG_ANSIBLE_TESTS}; do
+  echo "INFO[tests]: ${t}"
+  ansible-playbook -i localhost, -t "${t}" ${GCFG_ANSIBLE_DEBUG} "${SELF_DIR}/playbook.yaml"
+done

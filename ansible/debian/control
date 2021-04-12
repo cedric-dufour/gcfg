@@ -1,0 +1,21 @@
+Source: gcfg-ansible
+Section: admin
+Priority: optional
+Maintainer: Cedric Dufour <cedric.dufour@ced-network.net>
+Build-Depends: python3 (>= 3.7), debhelper (>= 10), dh-python, python3-setuptools, python3-pbr
+X-Python3-Version: >= 3.7
+Homepage: https://github.com/cedric-dufour/gcfg
+Standards-Version: 4.3.0
+
+Package: gcfg-ansible
+Architecture: all
+Depends: ansible (>= 2.10), python3 (>= 3.7), ${python3:Depends}
+Suggests: gcfg (>= 3.0.20210412a)
+Description: GIT-based Configuration Tracking Utility (GCFG) - Ansible Collection
+ The objective of the GIT-based Configuration Tracking Utility (GCFG) is to
+ allow the tracking and versioning of (mostly configuration) files on a system,
+ in a manner that makes it easy to have a global overview of how the system is
+ configured and what changes were made.
+ .
+ This package provides the "gcfg.gcfg" Ansible Collection, allowing to perform GCfg-based
+ comnfiguration in Ansible Playbooks.

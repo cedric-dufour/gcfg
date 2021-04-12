@@ -1,0 +1,33 @@
+---
+namespace: gcfg
+name: gcfg
+readme: README.md
+authors: Cédric Dufour
+description: Ansible collection for the GIT-based Configuration Tracking Utility (GCfg)
+license: GPL-3.0-or-later
+tags:
+  - gcfg
+dependencies: {}
+repository: https://github.com/cedric-dufour/gcfg
+documentation: https://github.com/cedric-dufour/gcfg/README.md
+homepage: https://github.com/cedric-dufour/gcfg
+issues: https://github.com/cedric-dufour/gcfg/issues
+build_ignore:
+  - "*.tar.gz"
+  - ansible_collections
+  - ansible_collections_gcfg.gcfg.egg-info
+  - cleanup
+  - debian
+  - importer_result.json
+  - lint
+  - requirements.txt
+  - setup.cfg
+  - setup.py
+  - tests
+  - .ansible-lint
+  - .cache
+  - .flake8
+  - .gitignore
+  - .pytest_cache
+  - .yamllint
+version: 3.0.20210412a

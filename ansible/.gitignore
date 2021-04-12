@@ -1,0 +1,12 @@
+# Tests artefacts
+.cache
+.pytest_cache
+
+# Galaxy artefacts
+*.tar.gz
+ansible_collections_gcfg.gcfg.egg-info
+importer_result.json
+
+# Debian packaging artefacts
+# (packaging folders)
+debian/gcfg-ansible

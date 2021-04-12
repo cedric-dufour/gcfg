@@ -23,10 +23,10 @@ build-source-tarball:
 	tar -C /tmp -cjf ../$(PACKAGE)-source-$(DEB_VERSION_UPSTREAM).tar.bz2 $(PACKAGE)-source-$(DEB_VERSION_UPSTREAM)
 	rm -rf /tmp/$(PACKAGE)-source-$(DEB_VERSION_UPSTREAM)
 
-version:
-	sed -i 's|^version:.*$$|version: $(DEB_VERSION_UPSTREAM)|' galaxy.yml
+ansible-galaxy-version:
+	sed -i "s|^version:.*\$$|version: $$(echo '$(DEB_VERSION_UPSTREAM)' | sed 's|[a-z]*$$||')|" galaxy.yml
 
-ansible-galaxy-tarball: version
+ansible-galaxy-tarball: ansible-galaxy-version
 	# Create the Ansible Galaxy Collection tarball
 	ansible-galaxy collection build
 

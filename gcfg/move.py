@@ -47,11 +47,11 @@ class GCfgMove(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Move the given file to the given destination file,
                   updating the configuration repository accordingly.
-            ''')
+            """)
         )
 
         # Additional arguments
@@ -59,12 +59,12 @@ class GCfgMove(GCfgBin):
         self._addOptionForce(self._oArgumentParser)
         self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'source', type=str, metavar='<source-file>',
-            help='source file'
+            "source", type=str, metavar="<source-file>",
+            help="source file"
         )
         self._oArgumentParser.add_argument(
-            'destination', type=str, metavar='<destination-file>',
-            help='destination file'
+            "destination", type=str, metavar="<destination-file>",
+            help="destination file"
         )
 
     #------------------------------------------------------------------------------

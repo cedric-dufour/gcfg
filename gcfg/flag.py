@@ -46,22 +46,22 @@ class GCfgFlag(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Add the given flag to the given file.
                   The flag must consist of alpha-numeric characters, underscores or hyphens.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._addOptionForce(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to add the flag to'
+            "file", type=str, metavar="<file>",
+            help="file to add the flag to"
         )
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>',
-            help='alpha-numeric flag'
+            "flag", type=str, metavar="<flag>",
+            help="alpha-numeric flag"
         )
 
     #------------------------------------------------------------------------------

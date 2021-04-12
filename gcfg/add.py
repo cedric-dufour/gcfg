@@ -47,10 +47,10 @@ class GCfgAdd(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Add the given file to the configuration repository.
-            ''')
+            """)
         )
 
         # Additional arguments
@@ -58,12 +58,12 @@ class GCfgAdd(GCfgBin):
         self._addOptionForce(self._oArgumentParser)
         self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to add to the configuration repository'
+            "file", type=str, metavar="<file>",
+            help="file to add to the configuration repository"
         )
         self._oArgumentParser.add_argument(
-            'original', type=str, metavar='<original-file>', nargs='?',
-            help='alternate original file to add to the configuration repository'
+            "original", type=str, metavar="<original-file>", nargs="?",
+            help="alternate original file to add to the configuration repository"
         )
 
     #------------------------------------------------------------------------------

@@ -47,10 +47,10 @@ class GCfgPkgSave(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Save the list of (manually) installed packages.
-            ''')
+            """)
         )
 
     #------------------------------------------------------------------------------
@@ -81,5 +81,5 @@ class GCfgPkgSave(GCfgBin):
         oGCfgLib.setSilent(self._oArguments.silent)
         if not oGCfgLib.check():
             return errno.EPERM
-        oGCfgLib.pkglist(oGCfgLib.getRepositoryPath('pkglist'))
+        oGCfgLib.pkglist(oGCfgLib.getRepositoryPath("pkglist"))
         return 0

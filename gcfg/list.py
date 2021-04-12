@@ -48,16 +48,16 @@ class GCfgList(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   List the files in the configuration repository
-            ''')
+            """)
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>', nargs='?',
-            help='flag to match when listing files (or @FLAGS to see all flags)'
+            "flag", type=str, metavar="<flag>", nargs="?",
+            help="flag to match when listing files (or @FLAGS to see all flags)"
         )
 
     #------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ class GCfgList(GCfgBin):
         for sFile in sorted(dlFiles):
             lFlags = dlFiles[sFile]
             if lFlags is not None:
-                sys.stdout.write('%s:%s\n' % (sFile, ','.join(lFlags)))
+                sys.stdout.write("%s:%s\n" % (sFile, ",".join(lFlags)))
             else:
-                sys.stdout.write('%s\n' % sFile)
+                sys.stdout.write("%s\n" % sFile)
         return 0

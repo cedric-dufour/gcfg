@@ -47,10 +47,10 @@ class GCfgVerify(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Verify the consistency of the configuration repository (links)
-            ''')
+            """)
         )
 
         # Additional arguments
@@ -58,8 +58,8 @@ class GCfgVerify(GCfgBin):
         self._addOptionForce(self._oArgumentParser)
         self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>', nargs='?',
-            help='specific file to verify (or force to change link type)'
+            "file", type=str, metavar="<file>", nargs="?",
+            help="specific file to verify (or force to change link type)"
         )
 
     #------------------------------------------------------------------------------

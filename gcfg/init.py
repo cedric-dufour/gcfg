@@ -47,10 +47,10 @@ class GCfgInit(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Initializes the configuration repository.
-            ''')
+            """)
         )
 
         # Additional arguments

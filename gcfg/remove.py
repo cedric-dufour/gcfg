@@ -47,18 +47,18 @@ class GCfgRemove(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Remove the given file from the configuration repository.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._addOptionBatch(self._oArgumentParser)
         self._addOptionForce(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to remove'
+            "file", type=str, metavar="<file>",
+            help="file to remove"
         )
 
     #------------------------------------------------------------------------------

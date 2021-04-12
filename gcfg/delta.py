@@ -47,20 +47,20 @@ class GCfgDelta(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Show the differences between the given  file and its original content.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to show the differences for'
+            "file", type=str, metavar="<file>",
+            help="file to show the differences for"
         )
         self._oArgumentParser.add_argument(
-            'commentPrefix', type=str, metavar='<comment-prefix>', nargs='?',
-            help='comment prefix (used to stripped commented lines out of the result)'
+            "commentPrefix", type=str, metavar="<comment-prefix>", nargs="?",
+            help="comment prefix (used to stripped commented lines out of the result)"
         )
 
     #------------------------------------------------------------------------------

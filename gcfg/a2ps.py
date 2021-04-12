@@ -47,23 +47,23 @@ class GCfgA2ps(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Create a Postscript document with all files in the configuration repository.
                   If a flag is specified, only matching files will be included.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._addOptionBatch(self._oArgumentParser)
         self._addOptionForce(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<postscript-file>',
-            help='file to save the Postscript output to'
+            "file", type=str, metavar="<postscript-file>",
+            help="file to save the Postscript output to"
         )
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>', nargs='?',
-            help='flag to match when including files'
+            "flag", type=str, metavar="<flag>", nargs="?",
+            help="flag to match when including files"
         )
 
     #------------------------------------------------------------------------------

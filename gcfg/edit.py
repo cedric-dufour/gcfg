@@ -47,18 +47,18 @@ class GCfgEdit(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Edit the given file (after adding it to the configuration repository).
                   The file will be flagged as '@EDITED' if modified.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to edit (and add to the configuration repository)'
+            "file", type=str, metavar="<file>",
+            help="file to edit (and add to the configuration repository)"
         )
 
     #------------------------------------------------------------------------------

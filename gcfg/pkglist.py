@@ -48,10 +48,10 @@ class GCfgPkgList(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Show the list of (manually) installed packages.
-            ''')
+            """)
         )
 
     #------------------------------------------------------------------------------

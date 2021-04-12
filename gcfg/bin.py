@@ -30,33 +30,33 @@ from gcfg import GCFG_VERSION, GCfgLib
 
 # Constants
 GCFG_COMMANDS = {
-    'init': 'GCfgInit',
-    'verify': 'GCfgVerify',
-    'list': 'GCfgList',
-    'add': 'GCfgAdd',
-    'new': 'GCfgAdd',
-    'copy': 'GCfgCopy',
-    'cp': 'GCfgCopy',
-    'move': 'GCfgMove',
-    'mv': 'GCfgMove',
-    'remove': 'GCfgRemove',
-    'rm': 'GCfgRemove',
-    'edit': 'GCfgEdit',
-    'permissions': 'GCfgPermissions',
-    'perm': 'GCfgPermissions',
-    'chmod': 'GCfgPermissions',
-    'chown': 'GCfgPermissions',
-    'flag': 'GCfgFlag',
-    'unflag': 'GCfgUnflag',
-    'flagged': 'GCfgFlagged',
-    'original': 'GCfgOriginal',
-    'orig': 'GCfgOriginal',
-    'delta': 'GCfgDelta',
-    'pkglist': 'GCfgPkgList',
-    'pkgsave': 'GCfgPkgSave',
-    'pkgdiff': 'GCfgPkgDiff',
-    'git': 'GCfgGit',
-    'a2ps': 'GCfgA2ps'
+    "init": "GCfgInit",
+    "verify": "GCfgVerify",
+    "list": "GCfgList",
+    "add": "GCfgAdd",
+    "new": "GCfgAdd",
+    "copy": "GCfgCopy",
+    "cp": "GCfgCopy",
+    "move": "GCfgMove",
+    "mv": "GCfgMove",
+    "remove": "GCfgRemove",
+    "rm": "GCfgRemove",
+    "edit": "GCfgEdit",
+    "permissions": "GCfgPermissions",
+    "perm": "GCfgPermissions",
+    "chmod": "GCfgPermissions",
+    "chown": "GCfgPermissions",
+    "flag": "GCfgFlag",
+    "unflag": "GCfgUnflag",
+    "flagged": "GCfgFlagged",
+    "original": "GCfgOriginal",
+    "orig": "GCfgOriginal",
+    "delta": "GCfgDelta",
+    "pkglist": "GCfgPkgList",
+    "pkgsave": "GCfgPkgSave",
+    "pkgdiff": "GCfgPkgDiff",
+    "git": "GCfgGit",
+    "a2ps": "GCfgA2ps"
 }
 
 
@@ -128,8 +128,8 @@ class GCfgBin:
 
         # Add argument
         _oArgumentParser.add_argument(
-            '-v', '--version', action='version',
-            version=('GCFG - %s - Cedric Dufour <http://cedric.dufour.name>\n' % GCFG_VERSION)
+            "-v", "--version", action="version",
+            version=("GCFG - %s - Cedric Dufour <http://cedric.dufour.name>\n" % GCFG_VERSION)
         )
 
     def _addOptionDebug(self, _oArgumentParser):
@@ -139,8 +139,8 @@ class GCfgBin:
 
         # Add argument
         _oArgumentParser.add_argument(
-            '-d', '--debug', action='store_true',
-            help='show debug (and all other) messages'
+            "-d", "--debug", action="store_true",
+            help="show debug (and all other) messages"
         )
 
     def _addOptionSilent(self, _oArgumentParser):
@@ -150,8 +150,8 @@ class GCfgBin:
 
         # Add argument
         _oArgumentParser.add_argument(
-            '-s', '--silent', action='store_true',
-            help='mute all informational and warning messages'
+            "-s", "--silent", action="store_true",
+            help="mute all informational and warning messages"
         )
 
     def _addOptionBatch(self, _oArgumentParser):
@@ -161,8 +161,8 @@ class GCfgBin:
 
         # Add argument
         _oArgumentParser.add_argument(
-            '-b', '--batch', action='store_true',
-            help='suppress all confirmation messages'
+            "-b", "--batch", action="store_true",
+            help="suppress all confirmation messages"
         )
 
     def _addOptionForce(self, _oArgumentParser):
@@ -172,8 +172,8 @@ class GCfgBin:
 
         # Add argument
         _oArgumentParser.add_argument(
-            '-f', '--force', action='store_true',
-            help='force default choices/actions in batch mode'
+            "-f", "--force", action="store_true",
+            help="force default choices/actions in batch mode"
         )
 
     def _addOptionLink(self, _oArgumentParser):
@@ -183,30 +183,30 @@ class GCfgBin:
 
         # Add argument
         _oArgumentParser.add_argument(
-            '-L', '--link', type=str, choices=['hardlink', 'symlink', 'copy'],
-            help='force link type'
+            "-L", "--link", type=str, choices=["hardlink", "symlink", "copy"],
+            help="force link type"
         )
         # ... legacy support
         _oArgumentParser.add_argument(
-            '--hard', action='store_true',
-            help='force hardlink (deprecated; use --link instead)'
+            "--hard", action="store_true",
+            help="force hardlink (deprecated; use --link instead)"
         )
         _oArgumentParser.add_argument(
-            '--symbolic', action='store_true',
-            help='force symlink (deprecated; use --link instead)'
+            "--symbolic", action="store_true",
+            help="force symlink (deprecated; use --link instead)"
         )
         _oArgumentParser.add_argument(
-            '--copy', action='store_true',
-            help='force copy (deprecated; use --link instead)'
+            "--copy", action="store_true",
+            help="force copy (deprecated; use --link instead)"
         )
 
     def _convertLegacyOptions(self, _oArguments):
-        if hasattr(_oArguments, 'hard') and _oArguments.hard:
-            _oArguments.link = 'hardlink'
-        elif hasattr(_oArguments, 'symbolic') and _oArguments.symbolic:
-            _oArguments.link = 'symlink'
-        elif hasattr(_oArguments, 'copy') and _oArguments.copy:
-            _oArguments.link = 'copy'
+        if hasattr(_oArguments, "hard") and _oArguments.hard:
+            _oArguments.link = "hardlink"
+        elif hasattr(_oArguments, "symbolic") and _oArguments.symbolic:
+            _oArguments.link = "symlink"
+        elif hasattr(_oArguments, "copy") and _oArguments.copy:
+            _oArguments.link = "copy"
 
     #------------------------------------------------------------------------------
     # METHODS
@@ -214,7 +214,7 @@ class GCfgBin:
 
     def _help(self):
         sys.stdout.write(
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 commands:
                   init:
                     Initializes the configuration repository
@@ -254,14 +254,14 @@ class GCfgBin:
 
                 further help:
                   gcfg <command> --help
-            ''')
+            """)
         )
 
     def _getLibrary(self):
         return GCfgLib(
-            os.getenv('GCFG_AUTHOR', pwd.getpwuid(os.getuid())[0]),
-            os.getenv('GCFG_EMAIL', '%s@%s' % (pwd.getpwuid(os.getuid())[0], socket.gethostbyaddr(socket.gethostname())[0])),
-            os.getenv('GCFG_ROOT', '/etc/gcfg')
+            os.getenv("GCFG_AUTHOR", pwd.getpwuid(os.getuid())[0]),
+            os.getenv("GCFG_EMAIL", "%s@%s" % (pwd.getpwuid(os.getuid())[0], socket.gethostbyaddr(socket.gethostname())[0])),
+            os.getenv("GCFG_ROOT", "/etc/gcfg")
         )
 
     #
@@ -280,24 +280,24 @@ class GCfgBin:
             lArguments = []
             for i in range(1, len(sys.argv)):
                 s = sys.argv[i]
-                if sCommand is None and s[0] != '-':
+                if sCommand is None and s[0] != "-":
                     sCommand = s
                     continue
                 lArguments += [s]
 
             # Instantiate command
             cCommand = GCFG_COMMANDS[sCommand]
-            oCommand = getattr(__import__('gcfg.%s' % sCommand, fromlist=['gcfg']), cCommand)
+            oCommand = getattr(__import__("gcfg.%s" % sCommand, fromlist=["gcfg"]), cCommand)
 
         except (IndexError, KeyError):
-            sys.stdout.write('usage: gcfg <command>\n')
+            sys.stdout.write("usage: gcfg <command>\n")
             if len(sys.argv) <= 1:
-                sys.stdout.write('error: too few arguments\n')
-            elif sys.argv[1] in ['help', '--help', '-h']:
+                sys.stdout.write("error: too few arguments\n")
+            elif sys.argv[1] in ["help", "--help", "-h"]:
                 self._help()
                 return 0
             else:
-                sys.stdout.write('error: invalid command\n')
+                sys.stdout.write("error: invalid command\n")
             return errno.EINVAL
 
         # Execute command

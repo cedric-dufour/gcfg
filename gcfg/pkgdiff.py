@@ -48,11 +48,11 @@ class GCfgPkgDiff(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   GIT-diff the list of (manually) installed packages.
                   Additional (unlisted) options will be passed to GIT.
-            ''')
+            """)
         )
 
     #------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ class GCfgPkgDiff(GCfgBin):
         if not oGCfgLib.check():
             return errno.EPERM
         oGCfgLib.git(
-            ['diff', oGCfgLib.getRepositoryPath('pkglist').lstrip(os.sep)] + lUnkownArguments,
+            ["diff", oGCfgLib.getRepositoryPath("pkglist").lstrip(os.sep)] + lUnkownArguments,
             False
         )
         return 0

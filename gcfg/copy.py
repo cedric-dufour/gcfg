@@ -47,11 +47,11 @@ class GCfgCopy(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Copy the given source file to the given destination file,
                   which will also be added configuration repository.
-            ''')
+            """)
         )
 
         # Additional arguments
@@ -59,12 +59,12 @@ class GCfgCopy(GCfgBin):
         self._addOptionForce(self._oArgumentParser)
         self._addOptionLink(self._oArgumentParser)
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='destination file (also added to the configuration repository)'
+            "file", type=str, metavar="<file>",
+            help="destination file (also added to the configuration repository)"
         )
         self._oArgumentParser.add_argument(
-            'source', type=str, metavar='<source-file>',
-            help='source file'
+            "source", type=str, metavar="<source-file>",
+            help="source file"
         )
 
     #------------------------------------------------------------------------------

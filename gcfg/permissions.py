@@ -51,24 +51,24 @@ class GCfgPermissions(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Show or change the permissions of the given file.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to show/change the permissions of'
+            "file", type=str, metavar="<file>",
+            help="file to show/change the permissions of"
         )
         self._oArgumentParser.add_argument(
-            'mode', type=str, metavar='<mode>', nargs='?',
-            help='file mode (chmod-like) to set'
+            "mode", type=str, metavar="<mode>", nargs="?",
+            help="file mode (chmod-like) to set"
         )
         self._oArgumentParser.add_argument(
-            'owner', type=str, metavar='<owner>', nargs='?',
-            help='file owner (chown-like) to set'
+            "owner", type=str, metavar="<owner>", nargs="?",
+            help="file owner (chown-like) to set"
         )
 
     #------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ class GCfgPermissions(GCfgBin):
             self._oArguments.mode,
             self._oArguments.owner
         )
-        sys.stdout.write('%s/%s %s:%s %s\n' % (
+        sys.stdout.write("%s/%s %s:%s %s\n" % (
             oct(iMode)[-4:], stat.filemode(iMode),
             pwd.getpwuid(iUID)[0],
             grp.getgrgid(iGID)[0],

@@ -48,20 +48,20 @@ class GCfgFlagged(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Check flag or retrieve flags list for the given file.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to check/retrieve flags for'
+            "file", type=str, metavar="<file>",
+            help="file to check/retrieve flags for"
         )
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>', nargs='?',
-            help='alpha-numeric flag'
+            "flag", type=str, metavar="<flag>", nargs="?",
+            help="alpha-numeric flag"
         )
 
     #------------------------------------------------------------------------------
@@ -100,5 +100,5 @@ class GCfgFlagged(GCfgBin):
             return errno.EINVAL
         elif mResult is True:
             return 0
-        sys.stdout.write('%s\n' % '\n'.join(mResult))
+        sys.stdout.write("%s\n" % "\n".join(mResult))
         return 0

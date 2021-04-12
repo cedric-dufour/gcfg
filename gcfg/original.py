@@ -48,20 +48,20 @@ class GCfgOriginal(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Show the original content of the given file.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            '-P', '--path', action='store_true',
-            help='return the original file content path'
+            "-P", "--path", action="store_true",
+            help="return the original file content path"
         )
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to show original content from'
+            "file", type=str, metavar="<file>",
+            help="file to show original content from"
         )
 
     #------------------------------------------------------------------------------
@@ -94,5 +94,5 @@ class GCfgOriginal(GCfgBin):
             return errno.EPERM
         sys.stdout.write(oGCfgLib.original(self._oArguments.file, self._oArguments.path))
         if (self._oArguments.path):
-            sys.stdout.write('\n')
+            sys.stdout.write("\n")
         return 0

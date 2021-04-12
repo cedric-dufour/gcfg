@@ -47,20 +47,20 @@ class GCfgUnflag(GCfgBin):
         GCfgBin._initArgumentParser(
             self,
             _sCommand,
-            textwrap.dedent('''
+            textwrap.dedent(r"""
                 synopsis:
                   Remove the given flag from the given file.
-            ''')
+            """)
         )
 
         # Additional arguments
         self._oArgumentParser.add_argument(
-            'file', type=str, metavar='<file>',
-            help='file to remove the flag from'
+            "file", type=str, metavar="<file>",
+            help="file to remove the flag from"
         )
         self._oArgumentParser.add_argument(
-            'flag', type=str, metavar='<flag>',
-            help='alpha-numeric flag'
+            "flag", type=str, metavar="<flag>",
+            help="alpha-numeric flag"
         )
 
     #------------------------------------------------------------------------------

@@ -32,24 +32,13 @@
         group: "{{ ansible_facts['user_gid'] }}"
         mode: "0755"
 
-    - name: prepare_file_foo
+    - name: prepare_file
       tags:
         - prepare
         - never
       copy:
-        dest: "{{ gcfg_tests_directory }}/foo"
-        content: "foo"
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-
-    - name: prepare_file_bar
-      tags:
-        - prepare
-        - never
-      copy:
-        dest: "{{ gcfg_tests_directory }}/bar"
-        content: "bar"
+        dest: "{{ gcfg_tests_directory }}/foobar"
+        content: "foobar"
         owner: "{{ ansible_facts['user_uid'] }}"
         group: "{{ ansible_facts['user_gid'] }}"
         mode: "0600"
@@ -120,399 +109,6 @@
       debug: var=gcfg_pkgsave
 
 
-    ## GCfg (do)
-
-    # gcfg.gcfg.file
-
-    - name: gcfg_file
-      tags:
-        - gcfg_file
-      gcfg.gcfg.file:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: present
-        path: "{{ gcfg_tests_directory }}/foo"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_file
-
-    - name: gcfg_file_debug
-      tags:
-        - gcfg_file
-        - debug
-      debug: var=gcfg_file
-
-    - name: gcfg_file_check
-      tags:
-        - gcfg_file
-      block:
-        - name: gcfg_file:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file
-        - name: gcfg_file:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file.stat.exists
-              - not gcfg_file.stat.islnk
-              - gcfg_file.stat.nlink == 2
-              - gcfg_file.stat.checksum == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
-              - gcfg_file.stat.mode == "0600"
-        - name: gcfg_file_git:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file_git
-        - name: gcfg_file_git:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file_git.stat.exists
-              - gcfg_file_git.stat.checksum == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
-              - gcfg_file_git.stat.mode == "0600"
-              - gcfg_file_git.stat.inode == gcfg_file.stat.inode
-        - name: gcfg_file_original:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file_original
-        - name: gcfg_file_original:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file_original.stat.exists
-              - gcfg_file_original.stat.checksum == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
-              - gcfg_file_original.stat.mode == "0600"
-        - name: gcfg_file_flag:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file_flag
-        - name: gcfg_file_flag:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file_flag.stat.exists
-              - gcfg_file_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
-
-    - name: gcfg_file_copy
-      tags:
-        - gcfg_file_copy
-      gcfg.gcfg.file:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: copy
-        path: "{{ gcfg_tests_directory }}/foo"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_file_copy
-
-    - name: gcfg_file_copy_debug
-      tags:
-        - gcfg_file_copy
-        - debug
-      debug: var=gcfg_file_copy
-
-    - name: gcfg_file_copy_check
-      tags:
-        - gcfg_file_copy
-      block:
-        - name: gcfg_file_copy:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file_copy
-        - name: gcfg_file_copy:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file_copy.stat.exists
-              - not gcfg_file_copy.stat.islnk
-              - gcfg_file_copy.stat.nlink == 1
-              - gcfg_file_copy.stat.checksum == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
-              - gcfg_file_copy.stat.mode == "0600"
-
-    - name: gcfg_file_link
-      tags:
-        - gcfg_file_link
-      gcfg.gcfg.file:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: link
-        path: "{{ gcfg_tests_directory }}/foo"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_file_link
-
-    - name: gcfg_file_link_debug
-      tags:
-        - gcfg_file_link
-        - debug
-      debug: var=gcfg_file_link
-
-    - name: gcfg_file_link_check
-      tags:
-        - gcfg_file_link
-      block:
-        - name: gcfg_file_link:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file_link
-        - name: gcfg_file_link:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file_link.stat.exists
-              - gcfg_file_link.stat.islnk
-
-    - name: gcfg_file_hard
-      tags:
-        - gcfg_file_hard
-      gcfg.gcfg.file:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: hard
-        path: "{{ gcfg_tests_directory }}/foo"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_file_hard
-
-    - name: gcfg_file_hard_debug
-      tags:
-        - gcfg_file_hard
-        - debug
-      debug: var=gcfg_file_hard
-
-    - name: gcfg_file_hard_check
-      tags:
-        - gcfg_file_hard
-      block:
-        - name: gcfg_file_hard:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/foo"
-          register: gcfg_file_hard
-        - name: gcfg_file_hard:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_file_hard.stat.exists
-              - not gcfg_file_hard.stat.islnk
-              - gcfg_file_hard.stat.nlink == 2
-              - gcfg_file_hard.stat.checksum == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
-              - gcfg_file_hard.stat.mode == "0600"
-
-    # gcfg.gcfg.copy
-
-    - name: gcfg_copy_content
-      tags:
-        - gcfg_copy_content
-      gcfg.gcfg.copy:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: present
-        dest: "{{ gcfg_tests_directory }}/bar"
-        content: "BAR"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_copy_content
-
-    - name: copy_content_debug
-      tags:
-        - gcfg_copy_content
-        - debug
-      debug: var=gcfg_copy_content
-
-    - name: gcfg_copy_content_check
-      tags:
-        - gcfg_copy_content
-      block:
-        - name: gcfg_copy_content:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/bar"
-          register: gcfg_copy_content
-        - name: gcfg_copy_content:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_content.stat.exists
-              - not gcfg_copy_content.stat.islnk
-              - gcfg_copy_content.stat.nlink == 2
-              - gcfg_copy_content.stat.checksum == "a5d5c1bba91fdb6c669e1ae0413820885bbfc455"
-        - name: gcfg_copy_content_git:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/bar"
-          register: gcfg_copy_content_git
-        - name: gcfg_copy_content_git:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_content_git.stat.exists
-              - gcfg_copy_content_git.stat.checksum == "a5d5c1bba91fdb6c669e1ae0413820885bbfc455"
-        - name: gcfg_copy_content_original:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/bar"
-          register: gcfg_copy_content_original
-        - name: gcfg_copy_content_original:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_content_original.stat.exists
-              - gcfg_copy_content_original.stat.checksum == "62cdb7020ff920e5aa642c3d4066950dd1f01f4d"
-        - name: gcfg_copy_content_flag:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/bar"
-          register: gcfg_copy_content_flag
-        - name: gcfg_copy_content_flag:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_content_flag.stat.exists
-              - gcfg_copy_content_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
-
-    - name: gcfg_copy_src
-      tags:
-        - gcfg_copy_src
-      gcfg.gcfg.copy:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: present
-        dest: "{{ gcfg_tests_directory }}/FOO"
-        src: "FOO"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_copy_src
-
-    - name: gcfg_copy_src_debug
-      tags:
-        - gcfg_copy_src
-        - debug
-      debug: var=gcfg_copy_src
-
-    - name: gcfg_copy_src_check
-      tags:
-        - gcfg_copy_src
-      block:
-        - name: gcfg_copy_src:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/FOO"
-          register: gcfg_copy_src
-        - name: gcfg_copy_src:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_src.stat.exists
-              - not gcfg_copy_src.stat.islnk
-              - gcfg_copy_src.stat.nlink == 2
-              - gcfg_copy_src.stat.checksum == "feab40e1fca77c7360ccca1481bb8ba5f919ce3a"
-        - name: gcfg_copy_src_git:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/FOO"
-          register: gcfg_copy_src_git
-        - name: gcfg_copy_src_git:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_src_git.stat.exists
-              - gcfg_copy_src_git.stat.checksum == "feab40e1fca77c7360ccca1481bb8ba5f919ce3a"
-        - name: gcfg_copy_src_original:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/FOO"
-          register: gcfg_copy_src_original
-        - name: gcfg_copy_src_original:check
-          assert:
-            quiet: true
-            that:
-              - not gcfg_copy_src_original.stat.exists
-        - name: gcfg_copy_src_flag:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/FOO"
-          register: gcfg_copy_src_flag
-        - name: gcfg_copy_src_flag:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_copy_src_flag.stat.exists
-              - gcfg_copy_src_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
-
-    # gcfg.gcfg.template
-
-    - name: gcfg_template
-      tags:
-        - gcfg_template
-      gcfg.gcfg.template:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: present
-        dest: "{{ gcfg_tests_directory }}/BAR"
-        src: "BAR.j2"
-        flag: ["@TEST"]
-        unflag: ["@ALL"]
-        owner: "{{ ansible_facts['user_uid'] }}"
-        group: "{{ ansible_facts['user_gid'] }}"
-        mode: "0600"
-      register: gcfg_template
-
-    - name: gcfg_template_debug
-      tags:
-        - gcfg_template
-        - debug
-      debug: var=gcfg_template
-
-    - name: gcfg_template_check
-      tags:
-        - gcfg_template
-      block:
-        - name: gcfg_template:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/BAR"
-          register: gcfg_template
-        - name: gcfg_template:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_template.stat.exists
-              - not gcfg_template.stat.islnk
-              - gcfg_template.stat.nlink == 2
-              - gcfg_template.stat.checksum == "{{ ('BAR @ '+ansible_facts['fqdn']) | hash('sha1') }}"
-        - name: gcfg_template_git:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/BAR"
-          register: gcfg_template_git
-        - name: gcfg_template_git:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_template_git.stat.exists
-              - gcfg_template_git.stat.checksum == "{{ ('BAR @ '+ansible_facts['fqdn']) | hash('sha1') }}"
-        - name: gcfg_template_original:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/BAR"
-          register: gcfg_template_original
-        - name: gcfg_template_original:check
-          assert:
-            quiet: true
-            that:
-              - not gcfg_template_original.stat.exists
-        - name: gcfg_template_flag:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/BAR"
-          register: gcfg_template_flag
-        - name: gcfg_template_flag:check
-          assert:
-            quiet: true
-            that:
-              - gcfg_template_flag.stat.exists
-              - gcfg_template_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
-
-
     ## GCfg (commit)
 
     # gcfg.gcfg.commit
@@ -533,6 +129,399 @@
       debug: var=gcfg_commit
 
 
+    ## GCfg (do)
+
+    # gcfg.gcfg.file
+
+    - name: gcfg_file
+      tags:
+        - gcfg_file
+      gcfg.gcfg.file:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: present
+        path: "{{ gcfg_tests_directory }}/foobar"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_file
+
+    - name: gcfg_file_debug
+      tags:
+        - gcfg_file
+        - debug
+      debug: var=gcfg_file
+
+    - name: gcfg_file_check
+      tags:
+        - gcfg_file
+      block:
+        - name: gcfg_file:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file
+        - name: gcfg_file:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file.stat.exists
+              - not gcfg_file.stat.islnk
+              - gcfg_file.stat.nlink == 2
+              - gcfg_file.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
+              - gcfg_file.stat.mode == "0600"
+        - name: gcfg_file_git:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file_git
+        - name: gcfg_file_git:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file_git.stat.exists
+              - gcfg_file_git.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
+              - gcfg_file_git.stat.mode == "0600"
+              - gcfg_file_git.stat.inode == gcfg_file.stat.inode
+        - name: gcfg_file_original:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file_original
+        - name: gcfg_file_original:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file_original.stat.exists
+              - gcfg_file_original.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
+              - gcfg_file_original.stat.mode == "0600"
+        - name: gcfg_file_flag:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file_flag
+        - name: gcfg_file_flag:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file_flag.stat.exists
+              - gcfg_file_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
+
+    - name: gcfg_file_copy
+      tags:
+        - gcfg_file_copy
+      gcfg.gcfg.file:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: copy
+        path: "{{ gcfg_tests_directory }}/foobar"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_file_copy
+
+    - name: gcfg_file_copy_debug
+      tags:
+        - gcfg_file_copy
+        - debug
+      debug: var=gcfg_file_copy
+
+    - name: gcfg_file_copy_check
+      tags:
+        - gcfg_file_copy
+      block:
+        - name: gcfg_file_copy:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file_copy
+        - name: gcfg_file_copy:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file_copy.stat.exists
+              - not gcfg_file_copy.stat.islnk
+              - gcfg_file_copy.stat.nlink == 1
+              - gcfg_file_copy.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
+              - gcfg_file_copy.stat.mode == "0600"
+
+    - name: gcfg_file_link
+      tags:
+        - gcfg_file_link
+      gcfg.gcfg.file:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: link
+        path: "{{ gcfg_tests_directory }}/foobar"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_file_link
+
+    - name: gcfg_file_link_debug
+      tags:
+        - gcfg_file_link
+        - debug
+      debug: var=gcfg_file_link
+
+    - name: gcfg_file_link_check
+      tags:
+        - gcfg_file_link
+      block:
+        - name: gcfg_file_link:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file_link
+        - name: gcfg_file_link:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file_link.stat.exists
+              - gcfg_file_link.stat.islnk
+
+    - name: gcfg_file_hard
+      tags:
+        - gcfg_file_hard
+      gcfg.gcfg.file:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: hard
+        path: "{{ gcfg_tests_directory }}/foobar"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_file_hard
+
+    - name: gcfg_file_hard_debug
+      tags:
+        - gcfg_file_hard
+        - debug
+      debug: var=gcfg_file_hard
+
+    - name: gcfg_file_hard_check
+      tags:
+        - gcfg_file_hard
+      block:
+        - name: gcfg_file_hard:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_file_hard
+        - name: gcfg_file_hard:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_file_hard.stat.exists
+              - not gcfg_file_hard.stat.islnk
+              - gcfg_file_hard.stat.nlink == 2
+              - gcfg_file_hard.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
+              - gcfg_file_hard.stat.mode == "0600"
+
+    # gcfg.gcfg.copy
+
+    - name: gcfg_copy_content
+      tags:
+        - gcfg_copy_content
+      gcfg.gcfg.copy:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: present
+        dest: "{{ gcfg_tests_directory }}/foobar"
+        content: "FOOBAR"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_copy_content
+
+    - name: copy_content_debug
+      tags:
+        - gcfg_copy_content
+        - debug
+      debug: var=gcfg_copy_content
+
+    - name: gcfg_copy_content_check
+      tags:
+        - gcfg_copy_content
+      block:
+        - name: gcfg_copy_content:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_copy_content
+        - name: gcfg_copy_content:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_content.stat.exists
+              - not gcfg_copy_content.stat.islnk
+              - gcfg_copy_content.stat.nlink == 2
+              - gcfg_copy_content.stat.checksum == "f3390fe2e5546dac3d1968970df1a222a3a39c00"
+        - name: gcfg_copy_content_git:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_copy_content_git
+        - name: gcfg_copy_content_git:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_content_git.stat.exists
+              - gcfg_copy_content_git.stat.checksum == "f3390fe2e5546dac3d1968970df1a222a3a39c00"
+        - name: gcfg_copy_content_original:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_copy_content_original
+        - name: gcfg_copy_content_original:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_content_original.stat.exists
+              - gcfg_copy_content_original.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
+        - name: gcfg_copy_content_flag:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/foobar"
+          register: gcfg_copy_content_flag
+        - name: gcfg_copy_content_flag:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_content_flag.stat.exists
+              - gcfg_copy_content_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
+
+    - name: gcfg_copy_src
+      tags:
+        - gcfg_copy_src
+      gcfg.gcfg.copy:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: present
+        dest: "{{ gcfg_tests_directory }}/FOOBAR"
+        src: "FOOBAR"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_copy_src
+
+    - name: gcfg_copy_src_debug
+      tags:
+        - gcfg_copy_src
+        - debug
+      debug: var=gcfg_copy_src
+
+    - name: gcfg_copy_src_check
+      tags:
+        - gcfg_copy_src
+      block:
+        - name: gcfg_copy_src:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_copy_src
+        - name: gcfg_copy_src:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_src.stat.exists
+              - not gcfg_copy_src.stat.islnk
+              - gcfg_copy_src.stat.nlink == 2
+              - gcfg_copy_src.stat.checksum == "f3390fe2e5546dac3d1968970df1a222a3a39c00"
+        - name: gcfg_copy_src_git:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_copy_src_git
+        - name: gcfg_copy_src_git:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_src_git.stat.exists
+              - gcfg_copy_src_git.stat.checksum == "f3390fe2e5546dac3d1968970df1a222a3a39c00"
+        - name: gcfg_copy_src_original:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_copy_src_original
+        - name: gcfg_copy_src_original:check
+          assert:
+            quiet: true
+            that:
+              - not gcfg_copy_src_original.stat.exists
+        - name: gcfg_copy_src_flag:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_copy_src_flag
+        - name: gcfg_copy_src_flag:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_copy_src_flag.stat.exists
+              - gcfg_copy_src_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
+
+    # gcfg.gcfg.template
+
+    - name: gcfg_template
+      tags:
+        - gcfg_template
+      gcfg.gcfg.template:
+        root: "{{ gcfg_tests_directory }}/gcfg"
+        state: present
+        dest: "{{ gcfg_tests_directory }}/FOOBAR"
+        src: "FOOBAR.j2"
+        flag: ["@TEST"]
+        unflag: ["@ALL"]
+        owner: "{{ ansible_facts['user_uid'] }}"
+        group: "{{ ansible_facts['user_gid'] }}"
+        mode: "0600"
+      register: gcfg_template
+
+    - name: gcfg_template_debug
+      tags:
+        - gcfg_template
+        - debug
+      debug: var=gcfg_template
+
+    - name: gcfg_template_check
+      tags:
+        - gcfg_template
+      block:
+        - name: gcfg_template:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_template
+        - name: gcfg_template:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_template.stat.exists
+              - not gcfg_template.stat.islnk
+              - gcfg_template.stat.nlink == 2
+              - gcfg_template.stat.checksum == "{{ ('FOOBAR @ '+ansible_facts['fqdn']) | hash('sha1') }}"
+        - name: gcfg_template_git:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_template_git
+        - name: gcfg_template_git:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_template_git.stat.exists
+              - gcfg_template_git.stat.checksum == "{{ ('FOOBAR @ '+ansible_facts['fqdn']) | hash('sha1') }}"
+        - name: gcfg_template_original:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_template_original
+        - name: gcfg_template_original:check
+          assert:
+            quiet: true
+            that:
+              - not gcfg_template_original.stat.exists
+        - name: gcfg_template_flag:stat
+          stat:
+            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_template_flag
+        - name: gcfg_template_flag:check
+          assert:
+            quiet: true
+            that:
+              - gcfg_template_flag.stat.exists
+              - gcfg_template_flag.stat.checksum == "d81cff1359f4a9d01a5d65dca963ac49c7db6ebe"
+
+
     ## GCfg (undo)
 
     # gcfg.gcfg.file
@@ -544,7 +533,7 @@
       gcfg.gcfg.file:
         root: "{{ gcfg_tests_directory }}/gcfg"
         state: absent
-        path: "{{ gcfg_tests_directory }}/foo"
+        path: "{{ gcfg_tests_directory }}/foobar"
       register: gcfg_file_absent
 
     - name: gcfg_file_absent_debug
@@ -560,7 +549,7 @@
       block:
         - name: gcfg_file_absent:stat
           stat:
-            path: "{{ gcfg_tests_directory }}/foo"
+            path: "{{ gcfg_tests_directory }}/foobar"
           register: gcfg_file_absent
         - name: gcfg_file_absent:check
           assert:
@@ -569,10 +558,10 @@
               - gcfg_file_absent.stat.exists
               - not gcfg_file_absent.stat.islnk
               - gcfg_file_absent.stat.nlink == 1
-              - gcfg_file_absent.stat.checksum == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
+              - gcfg_file_absent.stat.checksum == "8843d7f92416211de9ebb963ff4ce28125932878"
         - name: gcfg_file_absent_git:stat
           stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/foo"
+            path: "{{ gcfg_tests_directory }}/gcfg/git/{{ gcfg_tests_directory }}/foobar"
           register: gcfg_file_absent_git
         - name: gcfg_file_absent_git:check
           assert:
@@ -581,7 +570,7 @@
               - not gcfg_file_absent_git.stat.exists
         - name: gcfg_file_absent_original:stat
           stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/foo"
+            path: "{{ gcfg_tests_directory }}/gcfg/original/{{ gcfg_tests_directory }}/foobar"
           register: gcfg_file_absent_original
         - name: gcfg_file_absent_original:check
           assert:
@@ -590,7 +579,7 @@
               - not gcfg_file_absent_original.stat.exists
         - name: gcfg_file_absent_flag:stat
           stat:
-            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/foo"
+            path: "{{ gcfg_tests_directory }}/gcfg/flag/{{ gcfg_tests_directory }}/foobar"
           register: gcfg_file_absent_flag
         - name: gcfg_file_absent_flag:check
           assert:
@@ -600,103 +589,36 @@
 
     # gcfg.gcfg.copy
 
-    - name: gcfg_copy_content_absent
+    - name: gcfg_copy_absent
       tags:
-        - gcfg_copy_content_absent
+        - gcfg_copy_absent
         - never
       gcfg.gcfg.file:
         root: "{{ gcfg_tests_directory }}/gcfg"
         state: absent
-        path: "{{ gcfg_tests_directory }}/bar"
-      register: gcfg_copy_content_absent
+        path: "{{ gcfg_tests_directory }}/FOOBAR"
+      register: gcfg_copy_absent
 
-    - name: gcfg_copy_content_absent_debug
+    - name: gcfg_copy_absent_debug
       tags:
-        - gcfg_copy_content_absent
+        - gcfg_copy_absent
         - debug
         - never
-      debug: var=gcfg_copy_content_absent
+      debug: var=gcfg_copy_absent
 
-    - name: gcfg_copy_content_absent_check
+    - name: gcfg_copy_absent_check
       tags:
-        - gcfg_copy_content_absent
+        - gcfg_copy_absent
       block:
-        - name: gcfg_copy_content_absent:stat
+        - name: gcfg_copy_absent:stat
           stat:
-            path: "{{ gcfg_tests_directory }}/bar"
-          register: gcfg_copy_content_absent
-        - name: gcfg_copy_content_absent:check
+            path: "{{ gcfg_tests_directory }}/FOOBAR"
+          register: gcfg_copy_absent
+        - name: gcfg_copy_absent:check
           assert:
             quiet: true
             that:
-              - gcfg_copy_content_absent.stat.exists
-              - not gcfg_copy_content_absent.stat.islnk
-              - gcfg_copy_content_absent.stat.nlink == 1
-              - gcfg_copy_content_absent.stat.checksum == "62cdb7020ff920e5aa642c3d4066950dd1f01f4d"
-
-    - name: gcfg_copy_src_absent
-      tags:
-        - gcfg_copy_src_absent
-        - never
-      gcfg.gcfg.file:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: absent
-        path: "{{ gcfg_tests_directory }}/FOO"
-      register: gcfg_copy_src_absent
-
-    - name: gcfg_copy_src_absent_debug
-      tags:
-        - gcfg_copy_src_absent
-        - debug
-        - never
-      debug: var=gcfg_copy_src_absent
-
-    - name: gcfg_copy_src_absent_check
-      tags:
-        - gcfg_copy_src_absent
-      block:
-        - name: gcfg_copy_src_absent:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/FOO"
-          register: gcfg_copy_src_absent
-        - name: gcfg_copy_src_absent:check
-          assert:
-            quiet: true
-            that:
-              - not gcfg_copy_src_absent.stat.exists
-
-    # gcfg.gcfg.template
-
-    - name: gcfg_template_absent
-      tags:
-        - gcfg_template_absent
-        - never
-      gcfg.gcfg.file:
-        root: "{{ gcfg_tests_directory }}/gcfg"
-        state: absent
-        path: "{{ gcfg_tests_directory }}/BAR"
-      register: gcfg_template_absent
-
-    - name: gcfg_template_absent_debug
-      tags:
-        - gcfg_template_absent
-        - debug
-        - never
-      debug: var=gcfg_template_absent
-
-    - name: gcfg_template_absent_check
-      tags:
-        - gcfg_template_absent
-      block:
-        - name: gcfg_template_absent:stat
-          stat:
-            path: "{{ gcfg_tests_directory }}/BAR"
-          register: gcfg_template_absent
-        - name: gcfg_template_absent:check
-          assert:
-            quiet: true
-            that:
-              - not gcfg_template_absent.stat.exists
+              - not gcfg_copy_absent.stat.exists
 
 
     ## Cleanup

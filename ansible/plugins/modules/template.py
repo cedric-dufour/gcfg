@@ -18,7 +18,7 @@ version_added: unreleased
 short_description: Template a file out to remote location and GCfg-track it
 description:
   - The C(template) module templates a file from the local machine to a location on the remote machine.
-  - See the M(ansible.gcfg.file) for common options (file attributes, flags, etc.).
+  - See the M(ansible.gcfg.copy) for all options.
 extends_documentation_fragment:
   - backup
   - files

@@ -230,6 +230,46 @@ def _state_gcfg2ansible(gcfg_state):
     return state
 
 
+def _copy_file(path, src, remote_src, mode):
+    try:
+        b_src = to_bytes(src, errors="surrogate_or_strict")
+        b_path = to_bytes(path, errors="surrogate_or_strict")
+        b_mysrc = b_src
+        if remote_src:
+            (_, b_mysrc) = tempfile.mkstemp(dir=os.path.dirname(b_path))
+            shutil.copyfile(b_src, b_mysrc)
+            try:
+                shutil.copystat(b_src, b_mysrc)
+            except OSError as err:
+                if err.errno == errno.ENOSYS and mode == "preserve":
+                    module.warn(f"Failed to copy {src} stats")
+                else:
+                    raise
+
+        module.atomic_move(b_mysrc, path, unsafe_writes=module.params["unsafe_writes"])
+
+        if not remote_src:
+            try:
+                acl_command = ["which", "setfacl"]
+                b_acl_command = [to_bytes(x) for x in acl_command]
+                (rc, out, err) = module.run_command(b_acl_command, environ_update=dict(LANG="C", LC_ALL="C", LC_MESSAGES="C"))
+                if rc == 0:
+                    acl_command = ["setfacl", "-b", path]
+                    b_acl_command = [to_bytes(x) for x in acl_command]
+                    (rc, out, err) = module.run_command(b_acl_command, environ_update=dict(LANG="C", LC_ALL="C", LC_MESSAGES="C"))
+                    if rc != 0:
+                        raise RuntimeError(f"Failed to clear {path} ACLs; {err}")
+            except Exception as e:
+                if "Operation not supported" in to_native(e):
+                    # The file system does not support ACLs.
+                    pass
+                else:
+                    raise
+
+    except OSError:
+        module.fail_json(msg="Failed to copy {src} to {path}", traceback=traceback.format_exc())
+
+
 def main():
 
     # Ansible module
@@ -251,6 +291,7 @@ def main():
             checksum=dict(type="str"),
             validate=dict(type="str"),
             remote_src=dict(type="bool"),
+            _content_changed=dict(type="bool", default=False),  # passed by the controller
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -270,6 +311,7 @@ def main():
     checksum = module.params["checksum"]
     validate = module.params["validate"]
     remote_src = module.params["remote_src"]
+    _content_changed = module.params["_content_changed"]
     # (alias)
     path = dest
     # (<-> attributes)
@@ -305,7 +347,7 @@ def main():
         module.fail_json(msg=f"Destination {path} may not be a directory")
     if os.path.exists(b_path):
         if not force:
-            module.exit_json(msg="Destination already exists", src=src, dest=path, changed=False)
+            module.exit_json(msg=f"Destination {path} already exists", src=src, dest=path, changed=False, skipped=True)
         if not os.access(b_path, os.W_OK):
             module.fail_json(msg=f"Destination {path} not writable")
     else:
@@ -452,37 +494,7 @@ def main():
                     module.fail_json(msg=f"[GCfg] Failed to add {path}; {str(e)}")
 
             # Copy (src -> dest)
-            try:
-                b_mysrc = b_src
-                if remote_src:
-                    (_, b_mysrc) = tempfile.mkstemp(dir=os.path.dirname(b_path))
-                    shutil.copyfile(b_src, b_mysrc)
-                    try:
-                        shutil.copystat(b_src, b_mysrc)
-                    except OSError as err:
-                        if err.errno == errno.ENOSYS and mode == "preserve":
-                            module.warn(f"Failed to copy {src} stats")
-                        else:
-                            raise
-
-                module.atomic_move(b_mysrc, path, unsafe_writes=module.params["unsafe_writes"])
-
-                if not remote_src:
-                    try:
-                        acl_command = ["setfacl", "-b", path]
-                        b_acl_command = [to_bytes(x) for x in acl_command]
-                        (rc, out, err) = module.run_command(b_acl_command, environ_update=dict(LANG="C", LC_ALL="C", LC_MESSAGES="C"))
-                        if rc != 0:
-                            raise RuntimeError(f"Failed to clear {path} ACLs; {err}")
-                    except Exception as e:
-                        if "Operation not supported" in to_native(e):
-                            # The file system does not support ACLs.
-                            pass
-                        else:
-                            raise
-
-            except OSError:
-                module.fail_json(msg="Failed to copy {src} to {path}", traceback=traceback.format_exc())
+            _copy_file(path, src, remote_src, mode)
 
             # Re-link
             if os.path.exists(b_path_git):  # file is already tracked
@@ -503,11 +515,16 @@ def main():
                     module.fail_json(msg=f"[GCfg] Failed to add {path}; {str(e)}")
 
     # (link)
-    elif not gcfg_unchanged or (state != "present" and gcfg_current_state != gcfg_target_state):
+    elif _content_changed or not gcfg_unchanged or (state != "present" and gcfg_current_state != gcfg_target_state):
         changed = True
         diff["before"]["state"] = gcfg_current_state
-        diff["after"]["state"] = gcfg_target_state
+        diff["after"]["state"] = gcfg_target_state or gcfg_current_state
         if not module.check_mode:
+            # Copy (src -> dest)
+            if _content_changed:
+                _copy_file(path, src, remote_src, mode)
+
+            # Re-link
             try:
                 gcfg.link(path, gcfg_target_state, True, True)
             except Exception as e:

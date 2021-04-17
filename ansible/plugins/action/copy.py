@@ -29,21 +29,10 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
-
-
-# Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
-REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
-                          ("root", "state", "path", "backup", "original", "flag", "unflag", "_diff_peek"))
-
-
-def _create_remote_file_args(module_args):
-    """remove keys that are not relevant to file"""
-    return dict((k, v) for k, v in module_args.items() if k in REAL_FILE_ARGS)
 
 
 def _create_remote_copy_args(module_args):
@@ -83,8 +72,8 @@ class ActionModule(ActionBase):
         force = boolean(self._task.args.get("force", "yes"), strict=False)
         raw = boolean(self._task.args.get("raw", "no"), strict=False)
 
-        result = {}
-        result["diff"] = []
+        result = {"diff": []}
+        content_changed = False
 
         # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
         try:
@@ -110,79 +99,57 @@ class ActionModule(ActionBase):
             return result
 
         if dest_status["exists"] and not force:
-            # remote_file exists so continue to next iteration.
             return None
 
         # Generate a hash of the local file.
         local_checksum = checksum(source_full)
 
+        # Show differences
         if local_checksum != dest_status["checksum"]:
-            # The checksums don't match and we will change or error out.
-
+            content_changed = True
             if self._play_context.diff and not raw:
                 result["diff"].append(self._get_diff_data(dest, source_full, task_vars))
-
             if self._play_context.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
                 result["changed"] = True
                 return result
 
-            # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, "source")
+        # Define a remote directory that we will copy the file to.
+        tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, "source")
 
-            remote_path = None
-
-            if not raw:
-                remote_path = self._transfer_file(source_full, tmp_src)
-            else:
-                self._transfer_file(source_full, dest)
-
-            # We have copied the file remotely and no longer require our content_tempfile
-            self._remove_tempfile_if_content_defined(content, content_tempfile)
-            self._loader.cleanup_tmp_file(source_full)
-
-            # FIXME: I don't think this is needed when PIPELINING=0 because the source is created
-            # world readable.  Access to the directory itself is controlled via fixup_perms2() as
-            # part of executing the module. Check that umask with scp/sftp/piped doesn't cause
-            # a problem before acting on this idea. (This idea would save a round-trip)
-            # fix file permissions when the copy is done as a different user
-            if remote_path:
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
-
-            if raw:
-                # Continue to next iteration if raw is defined.
-                return None
-
-            # Run the copy module
-
-            new_module_args = _create_remote_copy_args(self._task.args)
-            new_module_args.update(dict(src=tmp_src))
-            if not self._task.args.get("checksum"):
-                new_module_args["checksum"] = local_checksum
-
-            if lmode:
-                new_module_args["mode"] = lmode
-
-            module_return = self._execute_module(module_name="gcfg.gcfg.copy", module_args=new_module_args, task_vars=task_vars)
-
+        # Transfer the file
+        remote_path = None
+        if not raw:
+            remote_path = self._transfer_file(source_full, tmp_src)
         else:
-            # no need to transfer the file, already correct hash, but still need to call
-            # the file module in case we want to change attributes
-            self._remove_tempfile_if_content_defined(content, content_tempfile)
-            self._loader.cleanup_tmp_file(source_full)
+            self._transfer_file(source_full, dest)
 
-            if raw:
-                return None
+        # FIXME: I don't think this is needed when PIPELINING=0 because the source is created
+        # world readable.  Access to the directory itself is controlled via fixup_perms2() as
+        # part of executing the module. Check that umask with scp/sftp/piped doesn't cause
+        # a problem before acting on this idea. (This idea would save a round-trip)
+        # fix file permissions when the copy is done as a different user
+        if remote_path:
+            self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
-            # Build temporary module_args.
-            new_module_args = _create_remote_file_args(self._task.args)
-            new_module_args.update({"path": dest})
+        # We no longer require our content_tempfile
+        self._remove_tempfile_if_content_defined(content, content_tempfile)
+        self._loader.cleanup_tmp_file(source_full)
 
-            if lmode:
-                new_module_args["mode"] = lmode
+        if raw:
+            return None
 
-            # Execute the file module.
-            module_return = self._execute_module(module_name="gcfg.gcfg.file", module_args=new_module_args, task_vars=task_vars)
+        # Run the copy module
+
+        new_module_args = _create_remote_copy_args(self._task.args)
+        new_module_args.update({"src": tmp_src, "_content_changed": content_changed})
+        if not self._task.args.get("checksum"):
+            new_module_args["checksum"] = local_checksum
+
+        if lmode:
+            new_module_args["mode"] = lmode
+
+        module_return = self._execute_module(module_name="gcfg.gcfg.copy", module_args=new_module_args, task_vars=task_vars)
 
         if not module_return.get("checksum"):
             module_return["checksum"] = local_checksum
@@ -273,6 +240,10 @@ class ActionModule(ActionBase):
         dest = self._remote_expand_user(dest)
 
         module_return = self._copy_file(src, os.path.basename(src), content, content_tempfile, dest, task_vars)
+        if module_return is None:
+            module_return = dict(changed=False, skipped=True)
+            result.update(module_return)
+            return self._ensure_invocation(result)
 
         if module_return.get("failed"):
             result.update(module_return)

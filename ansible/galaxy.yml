@@ -30,4 +30,4 @@ build_ignore:
   - .gitignore
   - .pytest_cache
   - .yamllint
-version: 3.0.20210412
+version: 3.0.20210417

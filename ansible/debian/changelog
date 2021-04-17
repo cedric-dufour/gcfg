@@ -1,3 +1,14 @@
+gcfg-ansible (3.0.20210417a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX(ansible): Once tracked, file content would no longer be changed
+  - FIX(ansible): Ansible Galaxy version
+  - NEW(ansible): Skip @EDITED files
+  - DEV(ansible): Improve unit tests
+  - DEV(ansible): ansible-base is enough
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Sat, 17 Apr 2021 20:50:26 +0200
+
 gcfg-ansible (3.0.20210412a) UNRELEASED; urgency=low
 
   * Post Tenebras Lux!

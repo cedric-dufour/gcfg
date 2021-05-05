@@ -48,7 +48,8 @@ options:
       - If C(link), file is linked using a symbolic link (e.g. cron files).
       - If C(copy), file is "linked" using a copy (e.g. across filesystems).
       - If C(absent), remove the file from GCfg. If the original file is available, it is restored
-        in place of the current file. Otherwise the file is deleted.
+        in place of the current file. This does NOT delete the original file; use the
+        M(ansible.builtin.file) afterwards to do so.
     type: str
     default: present
     choices: [ present, hard, link, copy, absent ]
@@ -254,6 +255,9 @@ def main():
     original = module.params["original"]
     flag = module.params["flag"] or []
     unflag = module.params["unflag"] or []
+    # (<-> state)
+    remove = state == "absent"
+    backup = backup and not remove
     # (<-> attributes)
     file_params = module.load_file_common_arguments(module.params)
 
@@ -272,10 +276,11 @@ def main():
     # Validation
     if path.endswith(os.sep) or os.path.isdir(b_path):
         module.fail_json(msg=f"Location {path} may not be a directory")
-    if not os.path.exists(b_path):
-        module.fail_json(msg=f"Location {path} must exist")
-    if not os.access(b_path, os.W_OK):
-        module.fail_json(msg=f"Location {path} not writable")
+    if not remove:
+        if not os.path.exists(b_path):
+            module.fail_json(msg=f"Location {path} must exist")
+        if not os.access(b_path, os.W_OK):
+            module.fail_json(msg=f"Location {path} not writable")
 
     # GCfg
     try:
@@ -305,11 +310,12 @@ def main():
             module.fail_json(msg=f"[GCfg] Failed to retrieve {path} original (backup) path; {str(e)}")
 
     # Validation (cont'd)
-    if not os.path.exists(b_path_git):  # file is untracked
-        if os.path.islink(b_path):
-            module.fail_json(msg=f"Location {path} may not be a symbolic link")
-        if os.stat(b_path).st_nlink > 1:
-            module.fail_json(msg=f"Location {path} may not be a hard link")
+    if not remove:
+        if not os.path.exists(b_path_git):  # file is untracked
+            if os.path.islink(b_path):
+                module.fail_json(msg=f"Location {path} may not be a symbolic link")
+            if os.stat(b_path).st_nlink > 1:
+                module.fail_json(msg=f"Location {path} may not be a hard link")
 
     # State
     try:
@@ -324,7 +330,7 @@ def main():
     result = {"path": path}
 
     # (remove)
-    if state == "absent":
+    if remove:
         if os.path.exists(b_path_git):
             changed = True
             diff["before"]["gcfg"] = "tracked"

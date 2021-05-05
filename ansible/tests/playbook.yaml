@@ -24,6 +24,7 @@
     - name: prepare_directory
       tags:
         - prepare
+        - prepare_directory
         - never
       file:
         state: directory
@@ -35,6 +36,7 @@
     - name: prepare_file
       tags:
         - prepare
+        - prepare_file
         - never
       copy:
         dest: "{{ gcfg_tests_directory }}/foobar"
@@ -42,6 +44,17 @@
         owner: "{{ ansible_facts['user_uid'] }}"
         group: "{{ ansible_facts['user_gid'] }}"
         mode: "0600"
+
+
+    ## Break
+
+    - name: break_file
+      tags:
+        - break_file
+        - never
+      file:
+        state: absent
+        path: "{{ gcfg_tests_directory }}/foobar"
 
 
     ## GCfg (init)

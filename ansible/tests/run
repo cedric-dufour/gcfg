@@ -7,7 +7,7 @@ export ANSIBLE_COLLECTIONS_PATHS="${SELF_DIR}/..:${ANSIBLE_COLLECTIONS_PATHS}"
 
 
 ## Tests
-: "${GCFG_ANSIBLE_TESTS:=prepare gcfg_init gcfg_pkgsave gcfg_commit gcfg_file_hard gcfg_file_absent gcfg_file_link gcfg_file_absent gcfg_file_copy gcfg_file_absent gcfg_file_hard gcfg_file_link gcfg_file_copy gcfg_file_absent gcfg_file gcfg_file_absent gcfg_copy_content gcfg_file_absent gcfg_file gcfg_copy_content gcfg_file_absent gcfg_copy_src gcfg_copy_absent gcfg_template gcfg_copy_absent gcfg_copy_src gcfg_copy_absent gcfg_template gcfg_copy_absent cleanup}"
+: "${GCFG_ANSIBLE_TESTS:=prepare gcfg_init gcfg_pkgsave gcfg_commit gcfg_file_hard gcfg_file_absent gcfg_file_link gcfg_file_absent gcfg_file_copy gcfg_file_absent gcfg_file_hard gcfg_file_link gcfg_file_copy gcfg_file_absent gcfg_file gcfg_file_absent gcfg_file_absent gcfg_copy_content gcfg_file_absent gcfg_file gcfg_copy_content gcfg_file_absent gcfg_copy_src gcfg_copy_absent gcfg_template gcfg_copy_absent gcfg_copy_src gcfg_template gcfg_copy_absent gcfg_copy_absent cleanup}"
 
 if [ -z "${GCFG_ANSIBLE_DEBUG}" ]; then
   GCFG_ANSIBLE_DEBUG='--skip-tags debug'

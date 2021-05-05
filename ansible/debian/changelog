@@ -1,3 +1,10 @@
+gcfg-ansible (3.0.20210505a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX(ansible): Don't fail when attempting to remove an unexisting file
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Wed, 05 May 2021 21:29:35 +0200
+
 gcfg-ansible (3.0.20210417a) UNRELEASED; urgency=low
 
   * NEW RELEASE

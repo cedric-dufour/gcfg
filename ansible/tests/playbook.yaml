@@ -606,10 +606,10 @@
       tags:
         - gcfg_copy_absent
         - never
-      gcfg.gcfg.file:
+      gcfg.gcfg.copy:
         root: "{{ gcfg_tests_directory }}/gcfg"
         state: absent
-        path: "{{ gcfg_tests_directory }}/FOOBAR"
+        dest: "{{ gcfg_tests_directory }}/FOOBAR"
       register: gcfg_copy_absent
 
     - name: gcfg_copy_absent_debug

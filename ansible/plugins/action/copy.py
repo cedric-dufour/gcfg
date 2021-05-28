@@ -29,10 +29,20 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
+
+
+REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
+    ('root', 'state', 'path', 'backup', 'original', 'flag', 'unflag')
+)
+
+
+def _create_remote_file_args(module_args):
+    return dict((k, v) for k, v in module_args.items() if k in REAL_FILE_ARGS)
 
 
 def _create_remote_copy_args(module_args):
@@ -183,10 +193,17 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
+        state = self._task.args.get("state", None)
         src = self._task.args.get("src", None)
         content = self._task.args.get("content", None)
         dest = self._task.args.get("dest", None)
         remote_src = boolean(self._task.args.get("remote_src", False), strict=False)
+
+        if state == 'absent':
+            new_module_args = _create_remote_file_args(self._task.args)
+            new_module_args['path'] = dest
+            result.update(self._execute_module(module_name="gcfg.gcfg.file", module_args=new_module_args, task_vars=task_vars))
+            return self._ensure_invocation(result)
 
         result["failed"] = True
         if not src and content is None:

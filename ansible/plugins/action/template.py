@@ -53,6 +53,7 @@ class ActionModule(ActionBase):
             raise AnsibleActionFail(to_native(e))
 
         # assign to local vars for ease of use
+        state = self._task.args.get("state", None)
         src = self._task.args.get("src", None)
         dest = self._task.args.get("dest", None)
         #state = self._task.args.get("state", None)
@@ -62,6 +63,26 @@ class ActionModule(ActionBase):
         block_start_string = self._task.args.get("block_start_string", None)
         block_end_string = self._task.args.get("block_end_string", None)
         output_encoding = self._task.args.get("output_encoding", "utf-8") or "utf-8"
+
+        # Eventually, further processing shall be delegated to the copy action
+        copy_task = self._task.copy()
+        for remove in (
+            "newline_sequence", "block_start_string", "block_end_string", "variable_start_string",
+            "variable_end_string", "trim_blocks", "lstrip_blocks", "output_encoding",
+        ):
+            copy_task.args.pop(remove, None)
+
+        if state == 'absent':
+            # Let the copy action handle the file removal
+            copy_action = self._shared_loader_obj.action_loader.get("gcfg.gcfg.copy",
+                                                                    task=copy_task,
+                                                                    connection=self._connection,
+                                                                    play_context=self._play_context,
+                                                                    loader=self._loader,
+                                                                    templar=self._templar,
+                                                                    shared_loader_obj=self._shared_loader_obj)
+            result.update(copy_action.run(task_vars=task_vars))
+            return result
 
         # Option `lstrip_blocks' was added in Jinja2 version 2.7.
         if lstrip_blocks:
@@ -97,6 +118,7 @@ class ActionModule(ActionBase):
             mode = self._task.args.get("mode", None)
             if mode == "preserve":
                 mode = "0%03o" % stat.S_IMODE(os.stat(src).st_mode)
+            copy_task.args["mode"] = mode
 
             # Get vault decrypted tmp file
             try:
@@ -142,25 +164,15 @@ class ActionModule(ActionBase):
             finally:
                 self._loader.cleanup_tmp_file(b_tmp_src)
 
-            new_task = self._task.copy()
-            # mode is either the mode from task.args or the mode of the source file if the task.args
-            # mode == "preserve"
-            new_task.args["mode"] = mode
-
-            # remove 'template only' options:
-            for remove in ("newline_sequence", "block_start_string", "block_end_string", "variable_start_string", "variable_end_string",
-                           "trim_blocks", "lstrip_blocks", "output_encoding"):
-                new_task.args.pop(remove, None)
-
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
 
             try:
                 result_file = os.path.join(local_tempdir, os.path.basename(src))
                 with open(to_bytes(result_file, errors="surrogate_or_strict"), "wb") as f:
                     f.write(to_bytes(resultant, encoding=output_encoding, errors="surrogate_or_strict"))
-                new_task.args.update({"src": result_file, "dest": dest})
+                copy_task.args.update({"src": result_file, "dest": dest})
                 copy_action = self._shared_loader_obj.action_loader.get("gcfg.gcfg.copy",
-                                                                        task=new_task,
+                                                                        task=copy_task,
                                                                         connection=self._connection,
                                                                         play_context=self._play_context,
                                                                         loader=self._loader,

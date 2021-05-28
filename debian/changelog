@@ -1,3 +1,9 @@
+gcfg (3.0.20210528a) UNRELEASED; urgency=low
+
+  * NEW RELEASE (ansible)
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Fri, 28 May 2021 22:51:07 +0200
+
 gcfg (3.0.20210505a) UNRELEASED; urgency=low
 
   * NEW RELEASE (ansible)

@@ -1,3 +1,10 @@
+gcfg-ansible (3.0.20210528a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX(ansible): Allow state=absent in copy and template operations
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Fri, 28 May 2021 22:51:07 +0200
+
 gcfg-ansible (3.0.20210505a) UNRELEASED; urgency=low
 
   * NEW RELEASE

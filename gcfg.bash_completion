@@ -34,7 +34,7 @@ _gcfg()
     local prev=${COMP_WORDS[COMP_CWORD-1]}
     case "$prev" in
       @(list))
-        COMPREPLY=( $( compgen -W '@EDITED @FLAGS' -- "$cur" ) )
+        COMPREPLY=( $( compgen -W '@ANSIBLE @EDITED @FLAGS' -- "$cur" ) )
       ;;
       @(verify|add|new|copy|cp|move|mv|remove|rm|edit|permissions|perm|chmod|chown|flag|unflag|flagged|original|orig|delta|a2ps))
         _filedir
@@ -54,4 +54,3 @@ _gcfg()
   return 0
 } &&
 complete -F _gcfg $filenames gcfg
-

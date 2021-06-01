@@ -89,7 +89,7 @@ options:
       - If C(no), the file will only be transferred if the destination does not exist.
     type: bool
     default: yes
-  force_unedit:
+  force_edit:
     description:
       - Influence whether a GCfg @EDITED file is overwritten.
       - If C(yes), the remote file will be replaced even if it has been GCfg @EDITED.
@@ -287,7 +287,7 @@ def main():
             flag=dict(type="list"),
             unflag=dict(type="list"),
             force=dict(type="bool", default=True),
-            force_unedit=dict(type="bool", default=False),
+            force_edit=dict(type="bool", default=False),
             checksum=dict(type="str"),
             validate=dict(type="str"),
             remote_src=dict(type="bool"),
@@ -307,7 +307,7 @@ def main():
     flag = module.params["flag"] or []
     unflag = module.params["unflag"] or []
     force = module.params["force"]
-    force_unedit = module.params["force_unedit"]
+    force_edit = module.params["force_edit"]
     checksum = module.params["checksum"]
     validate = module.params["validate"]
     remote_src = module.params["remote_src"]
@@ -461,12 +461,7 @@ def main():
 
     # (@EDITED ?)
     if "@EDITED" in gcfg_current_flags:
-        if force_unedit:
-            try:
-                gcfg_target_flags.remove("@EDITED")
-            except ValueError:
-                pass
-        else:
+        if not force_edit:
             result.update({"msg": f"Destination {path} has been @EDITED", "changed": False, "skipped": True})
             module.exit_json(**result)
 

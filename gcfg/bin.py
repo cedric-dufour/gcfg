@@ -38,25 +38,25 @@ GCFG_COMMANDS = {
     "copy": "GCfgCopy",
     "cp": "GCfgCopy",
     "move": "GCfgMove",
-    "mv": "GCfgMove",
+    "mv": "move",            # alias
     "remove": "GCfgRemove",
-    "rm": "GCfgRemove",
+    "rm": "remove",          # alias
     "edit": "GCfgEdit",
     "permissions": "GCfgPermissions",
-    "perm": "GCfgPermissions",
-    "chmod": "GCfgPermissions",
-    "chown": "GCfgPermissions",
+    "perm": "permissions",   # alias
+    "chmod": "permissions",  # alias
+    "chown": "permissions",  # alias
     "flag": "GCfgFlag",
     "unflag": "GCfgUnflag",
     "flagged": "GCfgFlagged",
     "original": "GCfgOriginal",
-    "orig": "GCfgOriginal",
+    "orig": "original",      # alias
     "delta": "GCfgDelta",
     "pkglist": "GCfgPkgList",
     "pkgsave": "GCfgPkgSave",
     "pkgdiff": "GCfgPkgDiff",
     "git": "GCfgGit",
-    "a2ps": "GCfgA2ps"
+    "a2ps": "GCfgA2ps",
 }
 
 
@@ -286,7 +286,12 @@ class GCfgBin:
                 lArguments += [s]
 
             # Instantiate command
-            cCommand = GCFG_COMMANDS[sCommand]
+            cCommand = None
+            while cCommand is None:
+                cCommand = GCFG_COMMANDS[sCommand]
+                if cCommand[:4] != "GCfg":
+                    sCommand = cCommand  # alias
+                    cCommand = None
             oCommand = getattr(__import__("gcfg.%s" % sCommand, fromlist=["gcfg"]), cCommand)
 
         except (IndexError, KeyError):

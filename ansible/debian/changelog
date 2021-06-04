@@ -1,3 +1,10 @@
+gcfg-ansible (3.0.20210604a) UNRELEASED; urgency=low
+
+  * NEW RELEASE
+  - FIX(ansible): <-> https://github.com/ansible/ansible/pull/73924
+
+ -- Cédric Dufour <cedric.dufour@ced-network.net>  Fri, 04 Jun 2021 21:09:43 +0200
+
 gcfg-ansible (3.0.20210602a) UNRELEASED; urgency=low
 
   * NEW RELEASE (core)
